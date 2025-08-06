@@ -14,7 +14,7 @@ pool.connect((err) => {
   if (err) {
     return console.error('Erro ao conectar ao banco de dados', err.stack);
   }
-  console.log('Conexão com o PostgreSQL realizada com sucesso!');
+  console.log('Conexão com o PostgreSQL realizada com sucesso! Chupa esta manga xD');
 });
 
 module.exports = pool;
