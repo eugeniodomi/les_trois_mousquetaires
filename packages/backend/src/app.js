@@ -1,16 +1,23 @@
 const express = require('express');
 const cors = require('cors');
-const itemRoutes = require('./routes/item.routes');
+const productRoutes = require('./routes/product.routes');
+const productValueRoutes = require('./routes/productValue.routes');
 
 const app = express();
 const port = 5000;
 
-// Middleware
+// Carregar Dotenv para segurança de credenciais
+require('dotenv').config();
+
+// Middleware - para que o Express entenda JSON
 app.use(express.json());
+
+// Middleware - para permitir requisições de diferentes origens
 app.use(cors());
 
-// Conecta as rotas
-app.use('/api/items', itemRoutes);
+// Conecte as rotas de cada recurso
+app.use('/api/produtos', productRoutes);
+app.use('/api/valores_produtos', productValueRoutes);
 
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
