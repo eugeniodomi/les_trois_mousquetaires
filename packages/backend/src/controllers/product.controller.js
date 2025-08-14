@@ -24,9 +24,9 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-// Adicione aqui as funções para update e delete se precisar
+// Adicione aqui as funções para update e delete ----se precisar---
 
-xports.updateProduct = async (req, res) => {
+exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const { nome, descricao } = req.body;
@@ -51,3 +51,70 @@ exports.deleteProduct = async (req, res) => {
     res.status(500).send('Erro no servidor');
   }
 };
+
+/*
+
+exports.searchProducts = async (req, res) => {
+  try {
+    // Pega o termo de busca da URL
+    const { q } = req.query;
+
+    // --- DEBUGGING ---
+    console.log("--- INICIANDO BUSCA DE PRODUTOS ---");
+    console.log("Termo de busca recebido (req.query.q):", q);
+    // -----------------
+
+    // Verifica se o termo de busca não é undefined ou vazio
+    if (!q) {
+      return res.json([]); // Retorna array vazio se não houver termo de busca
+    }
+
+    const query = 'SELECT * FROM produtos WHERE nome ILIKE $1 ORDER BY nome';
+    const values = [`%${q}%`];
+
+    // --- DEBUGGING ---
+    console.log("Consulta SQL executada:", query);
+    console.log("Valores enviados para a consulta:", values);
+    // -----------------
+
+    const { rows } = await pool.query(query, values);
+
+    // --- DEBUGGING ---
+    console.log("Resultados retornados pelo banco (rows):", rows);
+    console.log("--- FIM DA BUSCA ---");
+    // -----------------
+
+    res.json(rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Erro no servidor');
+  }
+};
+
+
+*/
+
+
+
+
+// NOVA LÓGICA PARA BUSCAR ITENS POR NOME
+exports.searchProducts = async (req, res) => {
+  try {
+    // 1. Pega o termo de busca da query string da URL (ex: /items/search?q=meuitem)
+    const { q } = req.query;
+
+    // 2. Monta a consulta SQL usando ILIKE para uma busca case-insensitive
+    //    e '%' para encontrar o termo em qualquer parte do nome.
+    const query = 'SELECT * FROM produtos WHERE nome ILIKE $1 ORDER BY nome';
+    const values = [`%${q}%`];
+
+    const { rows } = await pool.query(query, values);
+
+    // 3. Retorna os resultados encontrados (pode ser um array vazio)
+    res.json(rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Erro no servidor');
+  }
+};
+

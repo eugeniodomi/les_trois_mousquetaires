@@ -55,3 +55,24 @@ exports.deleteItem = async (req, res) => {
     res.status(500).send('Erro no servidor');
   }
 };
+
+// NOVA LÓGICA PARA BUSCAR ITENS POR NOME
+exports.searchItems = async (req, res) => {
+  try {
+    // 1. Pega o termo de busca da query string da URL (ex: /items/search?q=meuitem)
+    const { q } = req.query;
+
+    // 2. Monta a consulta SQL usando ILIKE para uma busca case-insensitive
+    //    e '%' para encontrar o termo em qualquer parte do nome.
+    const query = 'SELECT * FROM items WHERE name ILIKE $1 ORDER BY id';
+    const values = [`%${q}%`];
+
+    const { rows } = await pool.query(query, values);
+
+    // 3. Retorna os resultados encontrados (pode ser um array vazio)
+    res.json(rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Erro no servidor');
+  }
+};
