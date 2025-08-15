@@ -100,21 +100,31 @@ exports.searchProducts = async (req, res) => {
 // NOVA LÓGICA PARA BUSCAR ITENS POR NOME
 exports.searchProducts = async (req, res) => {
   try {
-    // 1. Pega o termo de busca da query string da URL (ex: /items/search?q=meuitem)
     const { q } = req.query;
 
-    // 2. Monta a consulta SQL usando ILIKE para uma busca case-insensitive
-    //    e '%' para encontrar o termo em qualquer parte do nome.
-    const query = 'SELECT * FROM produtos WHERE nome ILIKE $1 ORDER BY nome';
+    // Se não houver termo de busca, retorna um array vazio.
+    if (!q) {
+      return res.json([]);
+    }
+
+    // A consulta SQL agora tem um "OR" para buscar em múltiplos campos.
+    // encontrar resultados se o termo estiver no nome OU na descrição.
+    const query = `
+      SELECT * FROM produtos 
+      WHERE nome ILIKE $1 OR descricao ILIKE $1 
+      ORDER BY nome
+    `;
+
+    // O $1 foi substituído nos dois lugares da consulta.
     const values = [`%${q}%`];
+
+    console.log("Executando busca por:", values); // debug
 
     const { rows } = await pool.query(query, values);
 
-    // 3. Retorna os resultados encontrados (pode ser um array vazio)
     res.json(rows);
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Erro no servidor');
   }
 };
-

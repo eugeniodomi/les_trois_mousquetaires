@@ -1,3 +1,10 @@
+console.log('O caminho atual é:', __dirname); //debug 
+
+// Carregar Dotenv para segurança de credenciais
+// require('dotenv').config(); //depreceated
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+
 const express = require('express');
 const cors = require('cors');
 const productRoutes = require('./routes/product.routes');
@@ -6,8 +13,7 @@ const productValueRoutes = require('./routes/productValue.routes');
 const app = express();
 const port = 5000;
 
-// Carregar Dotenv para segurança de credenciais
-require('dotenv').config();
+
 
 // Middleware - para que o Express entenda JSON
 app.use(express.json());
