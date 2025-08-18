@@ -10,6 +10,9 @@ const cors = require('cors');
 const productRoutes = require('./routes/product.routes');
 const productValueRoutes = require('./routes/productValue.routes');
 
+//distributors
+const distributorRoutes = require('./routes/distributor.routes');
+
 const app = express();
 const port = 5000;
 
@@ -24,6 +27,9 @@ app.use(cors());
 // Conecte as rotas de cada recurso
 app.use('/api/produtos', productRoutes);
 app.use('/api/valores_produtos', productValueRoutes);
+
+//add NOVOS ROTAS
+app.use('/api/distribuidores', distributorRoutes);
 
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
