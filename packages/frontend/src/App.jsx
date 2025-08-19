@@ -1,5 +1,23 @@
 // src/App.jsx
 
+import AppRoutes from './routes/AppRoutes';
+
+function App() {
+  // O ThemeProvider e CssBaseline já estão no main.jsx, então não necessita eles aqui
+  return <AppRoutes />;
+}
+
+export default App;
+
+
+
+
+
+
+/*  app teste
+
+// src/App.jsx
+
 // Importe os componentes que você quer usar do MUI
 import { Typography, Button, Box } from '@mui/material';
 
@@ -24,12 +42,12 @@ function App() {
         Se o tema estiver funcionando, os botões abaixo terão as cores que definimos.
       </Typography>
 
-      {/* Este botão irá automaticamente usar a cor 'primary.main' do seu tema */}
+      {// Este botão irá automaticamente usar a cor 'primary.main' do seu tema }
       <Button variant="contained" color="primary">
         Botão Primário (Azul)
       </Button>
 
-      {/* Este botão irá automaticamente usar a cor 'secondary.main' do seu tema */}
+      {//* Este botão irá automaticamente usar a cor 'secondary.main' do seu tema }
       <Button variant="contained" color="secondary">
         Botão Secundário (Rosa)
       </Button>
@@ -38,3 +56,5 @@ function App() {
 }
 
 export default App;
+
+*/
