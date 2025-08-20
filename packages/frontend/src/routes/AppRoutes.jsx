@@ -11,6 +11,7 @@ import CotacoesPage from '../pages/CotacoesPage';
 import RelatoriosPage from '../pages/DashboardsPage'; 
 import SearchPage from '../pages/SearchPage';
 import DashboardsPage from '../pages/DashboardsPage';
+import CotacaoDetailPage from '../pages/CotacaoDetailPage';
 
 
 export default function AppRoutes() {
@@ -27,6 +28,7 @@ export default function AppRoutes() {
           <Route path="cotacoes" element={<CotacoesPage />} /> {/* Adicionar */}
           <Route path="dashboards" element={<DashboardsPage />} /> {/* Adicionar */}
           <Route path="buscar" element={<SearchPage />} /> {/* Adicionar */}
+          <Route path="cotacoes/:id" element={<CotacaoDetailPage />} />
 
         </Route>
       </Routes>

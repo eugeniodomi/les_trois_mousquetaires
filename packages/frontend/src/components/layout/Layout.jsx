@@ -1,7 +1,7 @@
-import React, { useState } from 'react'; // Adicionado useState
+import React, { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { styled, useTheme } from '@mui/material/styles';
-import { Box, Drawer as MuiDrawer, AppBar as MuiAppBar, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, IconButton, CssBaseline, Collapse } from '@mui/material'; // Adicionado Collapse
+import { Box, Drawer as MuiDrawer, AppBar as MuiAppBar, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, IconButton, CssBaseline, Collapse } from '@mui/material';
 
 // Ícones
 import MenuIcon from '@mui/icons-material/Menu';
@@ -11,13 +11,14 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import GroupIcon from '@mui/icons-material/Group';
 import SearchIcon from '@mui/icons-material/Search';
-import AppRegistrationIcon from '@mui/icons-material/AppRegistration'; // Ícone para Registros
+import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
-
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote'; // Ícone para Cotações
 
 const drawerWidth = 240;
 
+// ... (Componentes AppBar e Drawer - Nenhuma alteração aqui)
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
@@ -62,9 +63,9 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
   }),
 );
 
+
 export default function Layout() {
   const [open, setOpen] = useState(true);
-  // 1. Estado para controlar o sub-menu
   const [registrosOpen, setRegistrosOpen] = useState(false);
   const theme = useTheme();
 
@@ -72,7 +73,6 @@ export default function Layout() {
     setOpen(!open);
   };
 
-  // 2. Função para abrir/fechar o sub-menu
   const handleRegistrosClick = () => {
     setRegistrosOpen(!registrosOpen);
   };
@@ -128,7 +128,7 @@ export default function Layout() {
             <ListItemText primary="Dashboards" />
           </ListItemButton>
 
-          {/* 3. ITEM DE MENU "REGISTROS" QUE CONTROLA O SUB-MENU */}
+          {/* ITEM DE MENU "REGISTROS" */}
           <ListItemButton onClick={handleRegistrosClick}>
             <ListItemIcon>
               <AppRegistrationIcon />
@@ -137,7 +137,7 @@ export default function Layout() {
             {registrosOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
 
-          {/* 4. SUB-MENU QUE APARECE E DESAPARECE */}
+          {/* SUB-MENU QUE APARECE E DESAPARECE */}
           <Collapse in={registrosOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {/* Item "Produtos" aninhado */}
@@ -153,6 +153,13 @@ export default function Layout() {
                   <GroupIcon />
                 </ListItemIcon>
                 <ListItemText primary="Distribuidores" />
+              </ListItemButton>
+              {/* ===== ADAPTAÇÃO AQUI ===== */}
+              <ListItemButton component={Link} to="/cotacoes" sx={{ pl: 4 }}>
+                <ListItemIcon>
+                  <RequestQuoteIcon />
+                </ListItemIcon>
+                <ListItemText primary="Cotações" />
               </ListItemButton>
             </List>
           </Collapse>
