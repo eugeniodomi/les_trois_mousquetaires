@@ -1,5 +1,3 @@
-// src/components/layout/Layout.jsx
-
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { styled } from '@mui/material/styles';
@@ -14,22 +12,21 @@ import SearchIcon from '@mui/icons-material/Search';
 
 const drawerWidth = 240;
 
+// APP BAR
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
   zIndex: theme.zIndex.drawer + 1,
   transition: theme.transitions.create(['width', 'margin'], {
-    // ANIMAÇÃO MAIS SUAVE
     easing: theme.transitions.easing.easeInOut,
-    duration: theme.transitions.duration.standard, // Aumente a duração
+    duration: theme.transitions.duration.standard,
   }),
   ...(open && {
     marginLeft: drawerWidth,
     width: `calc(100% - ${drawerWidth}px)`,
     transition: theme.transitions.create(['width', 'margin'], {
-      // ANIMAÇÃO MAIS SUAVE
       easing: theme.transitions.easing.easeInOut,
-      duration: theme.transitions.duration.standard, // Aumente a duração
+      duration: theme.transitions.duration.standard,
     }),
   }),
 }));
@@ -41,7 +38,6 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
       whiteSpace: 'nowrap',
       width: drawerWidth,
       transition: theme.transitions.create('width', {
-        // ANIMAÇÃO MAIS SUAVE
         easing: theme.transitions.easing.easeInOut,
         duration: theme.transitions.duration.standard,
       }),
@@ -49,7 +45,6 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
       ...(!open && {
         overflowX: 'hidden',
         transition: theme.transitions.create('width', {
-          // ANIMAÇÃO MAIS SUAVE
           easing: theme.transitions.easing.easeInOut,
           duration: theme.transitions.duration.standard,
         }),
@@ -62,12 +57,21 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
   }),
 );
 
+
 export default function Layout() {
   const [open, setOpen] = React.useState(true);
 
   const handleDrawerToggle = () => {
     setOpen(!open);
   };
+
+  // ALTERADO: A função agora chama o toggle, em vez de só fechar.
+  const handleEmptySpaceClick = (event) => {
+    if (event.target === event.currentTarget) {
+      handleDrawerToggle();
+    }
+  };
+
 
   return (
     <Box sx={{ display: 'flex' }}>
@@ -78,9 +82,7 @@ export default function Layout() {
             color="inherit"
             aria-label="open drawer"
             onClick={handleDrawerToggle}
-            sx={{
-              marginRight: '36px',
-            }}
+            sx={{ marginRight: '36px' }}
           >
             <MenuIcon />
           </IconButton>
@@ -90,69 +92,67 @@ export default function Layout() {
         </Toolbar>
       </AppBar>
 
-      <Drawer variant="permanent" open={open}>
-        <Toolbar /> 
-        <List component="nav">
+      <Drawer
+        variant="permanent"
+        open={open}
+        PaperProps={{
+          // ALTERADO: Usando a nova função com a lógica de toggle.
+          onClick: handleEmptySpaceClick,
+        }}
+      >
+        <Toolbar />
+        <Box onClick={(e) => e.stopPropagation()}>
+          <List component="nav">
+            {/* ITENS MENU LATERAL */}
             <ListItem disablePadding sx={{ display: 'block' }}>
               <ListItemButton component={Link} to="/" sx={{ minHeight: 48, justifyContent: open ? 'initial' : 'center', px: 2.5 }}>
                 <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : 'auto', justifyContent: 'center' }}><HomeIcon /></ListItemIcon>
                 <ListItemText primary="Início" sx={{ opacity: open ? 1 : 0 }} />
               </ListItemButton>
             </ListItem>
-            
             <ListItem disablePadding sx={{ display: 'block' }}>
               <ListItemButton component={Link} to="/buscar" sx={{ minHeight: 48, justifyContent: open ? 'initial' : 'center', px: 2.5 }}>
                 <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : 'auto', justifyContent: 'center' }}><SearchIcon /></ListItemIcon>
                 <ListItemText primary="Buscar" sx={{ opacity: open ? 1 : 0 }} />
               </ListItemButton>
             </ListItem>
-
-            {/* Repita o padrão para os outros itens */}
             <ListItem disablePadding sx={{ display: 'block' }}>
                 <ListItemButton component={Link} to="/relatorios" sx={{ minHeight: 48, justifyContent: open ? 'initial' : 'center', px: 2.5 }}>
                     <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : 'auto', justifyContent: 'center' }}><BarChartIcon /></ListItemIcon>
                     <ListItemText primary="Relatórios" sx={{ opacity: open ? 1 : 0 }} />
                 </ListItemButton>
             </ListItem>
-
             <ListItem disablePadding sx={{ display: 'block' }}>
                 <ListItemButton component={Link} to="/produtos" sx={{ minHeight: 48, justifyContent: open ? 'initial' : 'center', px: 2.5 }}>
                     <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : 'auto', justifyContent: 'center' }}><InventoryIcon /></ListItemIcon>
                     <ListItemText primary="Produtos" sx={{ opacity: open ? 1 : 0 }} />
                 </ListItemButton>
             </ListItem>
-
             <ListItem disablePadding sx={{ display: 'block' }}>
                 <ListItemButton component={Link} to="/distribuidores" sx={{ minHeight: 48, justifyContent: open ? 'initial' : 'center', px: 2.5 }}>
                     <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : 'auto', justifyContent: 'center' }}><GroupIcon /></ListItemIcon>
                     <ListItemText primary="Distribuidores" sx={{ opacity: open ? 1 : 0 }} />
                 </ListItemButton>
             </ListItem>
-
             <ListItem disablePadding sx={{ display: 'block' }}>
                 <ListItemButton component={Link} to="/cotacoes" sx={{ minHeight: 48, justifyContent: open ? 'initial' : 'center', px: 2.5 }}>
                     <ListItemIcon sx={{ minWidth: 0, mr: open ? 3 : 'auto', justifyContent: 'center' }}><RequestQuoteIcon /></ListItemIcon>
                     <ListItemText primary="Cotações" sx={{ opacity: open ? 1 : 0 }} />
                 </ListItemButton>
             </ListItem>
-        </List>
+          </List>
+        </Box>
       </Drawer>
 
-      <Box
-        component="main"
-        sx={{
+      <Box component="main" sx={{
           backgroundColor: (theme) =>
-            theme.palette.mode === 'light'
-              ? theme.palette.grey[100]
-              : theme.palette.grey[900],
-          flexGrow: 1,
-          height: '100vh',
-          overflow: 'auto',
+            theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[900],
+          flexGrow: 1, height: '100vh', overflow: 'auto'
         }}
       >
         <Toolbar />
         <Box sx={{ p: 3 }}>
-            <Outlet />
+          <Outlet />
         </Box>
       </Box>
     </Box>
