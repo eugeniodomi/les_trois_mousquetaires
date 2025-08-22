@@ -13,6 +13,9 @@ const rateLimit = require('express-rate-limit');
 const productRoutes = require('./routes/product.routes');
 const productValueRoutes = require('./routes/productValue.routes');
 
+//ultimo add rota searchall
+const searchRoutes = require('./routes/search.routes.js');
+
 //distributors
 const distributorRoutes = require('./routes/distributor.routes');
 
@@ -20,7 +23,7 @@ const app = express();
 // ALTERADO: Usando a porta do .env ou 5000 como padrão
 const port = process.env.PORT || 5000; 
 
-// ADICIONADO: Configuração do Rate Limiter
+// Configuração do Rate Limiter
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 20, // Permite 20 requisições a cada 15 minutos por IP
@@ -29,6 +32,9 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+
+//ultima add
+app.use('/api/search', searchRoutes); // <-- rota de busca
 
 // Middleware - para que o Express entenda JSON
 app.use(express.json());
