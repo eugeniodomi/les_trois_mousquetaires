@@ -1,17 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const itemController = require('../controllers/item.controller');
+// ALTERADO: Importa o controller de produtos, não mais o de itens.
+const productController = require('../controllers/product.controller.js');
 
-// Rotas de itens
-router.get('/', itemController.getAllItems);
-router.post('/', itemController.createItem);
-router.put('/:id', itemController.updateItem);
-router.delete('/:id', itemController.deleteItem);
+// Rota para listar todos os produtos ativos
+// ALTERADO: Chama a função 'findAll'
+router.get('/', productController.findAll);
 
-// NOVA ROTA PARA BUSCA - test
-// Exemplo de URL: GET http://localhost:3000/api/items/search?q=notebook
-router.get('/search', itemController.searchItems);
+// Rota para criar um novo produto
+// ALTERADO: Chama a função 'create'
+router.post('/', productController.create);
 
+// Rota para buscar produtos por nome ou SKU
+// Exemplo de URL: GET http://localhost:3000/api/produtos/search?q=parafuso
+// ALTERADO: Chama a função 'search'
+router.get('/search', productController.search);
 
+// Rota para atualizar um produto
+// ALTERADO: Chama a função 'update'
+router.put('/:id', productController.update);
+
+// Rota para desativar (soft delete) um produto
+// ALTERADO: Chama a função 'delete'
+router.delete('/:id', productController.delete);
 
 module.exports = router;

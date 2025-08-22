@@ -1,5 +1,4 @@
-// Supondo que você use o node-postgres (pg) e tenha um pool de conexão configurado
-const pool = require('../config/database'); // <-- Seu arquivo de conexão com o banco
+const pool = require('../config/database');
 
 exports.globalSearch = async (req, res) => {
     // 1. Pega o termo de busca da query string da URL (?q=...)
@@ -9,40 +8,61 @@ exports.globalSearch = async (req, res) => {
         return res.status(400).json({ message: 'O termo de busca não pode ser vazio.' });
     }
 
-    // Usamos '%' para o operador LIKE do SQL funcionar como "contém"
     const searchTerm = `%${q}%`;
 
     try {
-        // 2. Aqui está a mágica: vamos fazer várias consultas em paralelo
-        // Esta é uma abordagem. Outra seria uma query SQL mais complexa com UNION (veja abaixo).
+        // 2. Consultas em paralelo, agora adaptadas para a nova estrutura do banco de dados
 
+        // ALTERADO: Busca em 'produtos', usando 'nome' e 'sku', e filtrando por status 'ativo'.
         const productPromise = pool.query(
-            "SELECT id, name, 'product' as type FROM products WHERE name ILIKE $1",
+            `SELECT 
+                id, 
+                nome as titulo, 
+                sku as subtitulo, 
+                'produto' as tipo 
+             FROM produtos 
+             WHERE (nome ILIKE $1 OR sku ILIKE $1) AND status = 'ativo'`,
             [searchTerm]
         );
 
+        // ALTERADO: Busca em 'distribuidores', usando 'nome' e filtrando por status 'ativo'.
         const distributorPromise = pool.query(
-            "SELECT id, corporate_name as name, 'distributor' as type FROM distributors WHERE corporate_name ILIKE $1",
+            `SELECT 
+                id, 
+                nome as titulo, 
+                cnpj as subtitulo, 
+                'distribuidor' as tipo 
+             FROM distribuidores 
+             WHERE nome ILIKE $1 AND status = 'ativo'`,
             [searchTerm]
         );
 
-        const itemPromise = pool.query(
-            "SELECT id, description as name, 'item' as type FROM items WHERE description ILIKE $1",
+        // NOVO: Adicionada a busca na tabela 'categorias'.
+        const categoryPromise = pool.query(
+            `SELECT 
+                id, 
+                nome as titulo, 
+                'Categoria de produto' as subtitulo, 
+                'categoria' as tipo 
+             FROM categorias 
+             WHERE nome ILIKE $1`,
             [searchTerm]
         );
+
+        // REMOVIDO: A busca na tabela 'items' foi removida pois ela não existe mais no novo schema.
 
         // 3. Executa todas as promises ao mesmo tempo
-        const [productResults, distributorResults, itemResults] = await Promise.all([
+        const [productResults, distributorResults, categoryResults] = await Promise.all([
             productPromise,
             distributorPromise,
-            itemPromise,
+            categoryPromise,
         ]);
 
         // 4. Combina os resultados em um único array
         const allResults = [
             ...productResults.rows,
             ...distributorResults.rows,
-            ...itemResults.rows,
+            ...categoryResults.rows,
         ];
 
         // 5. Retorna a resposta consolidada
