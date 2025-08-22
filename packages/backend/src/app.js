@@ -1,4 +1,4 @@
-// console.log('O caminho atual é:', __dirname); //debug 
+console.log('O caminho atual é:', __dirname); //debug 
 
 // Carregar Dotenv para segurança de credenciais
 const path = require('path');
@@ -23,7 +23,7 @@ const port = process.env.PORT || 5000;
 // ADICIONADO: Configuração do Rate Limiter
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // ALTO PARA AMBIENTE DEV, ALTERAR POSTERIORMENTE
+  max: 20, // Permite 20 requisições a cada 15 minutos por IP
   message: 'Muitas requisições para este IP, por favor, tente novamente mais tarde.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -33,19 +33,8 @@ const authLimiter = rateLimit({
 // Middleware - para que o Express entenda JSON
 app.use(express.json());
 
-// =================== ALTERAÇÃO PRINCIPAL AQUI ===================
-// Middleware - para permitir requisições de origens específicas
-const corsOptions = {
-    // Usamos uma variável de ambiente para definir a URL do cliente.
-    // Isso nos dá flexibilidade para mudar de 'http://localhost:5173' em dev 
-    // para 'https://meusite.com' em produção.
-    origin: process.env.CLIENT_URL, 
-    optionsSuccessStatus: 200 // Para compatibilidade com navegadores mais antigos
-};
-
-app.use(cors(corsOptions));
-// ================================================================
-
+// Middleware - para permitir requisições de diferentes origens
+app.use(cors());
 
 // Conecte as rotas de cada recurso
 app.use('/api/produtos', productRoutes);
@@ -61,6 +50,4 @@ app.use('/api/auth', authLimiter, require('./routes/authRoutes'));
 
 app.listen(port, () => {
   console.log(`Servidor rodando em http://localhost:${port}`);
-  // Adiciona um log para sabermos de onde esperamos requisições
-  console.log(`Aguardando requisições da origem: ${process.env.CLIENT_URL}`);
 });
