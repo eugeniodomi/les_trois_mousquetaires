@@ -1,32 +1,55 @@
-// src/services/quotationService.js
+// frontend/src/services/quotationService.js
 
-// A URL base da sua API de cotações.
-// Certifique-se de que a porta (5000) está correta.
 const API_QUOTATIONS_URL = 'http://localhost:5000/api/cotacoes';
 
+// ==========================================================
+// ## NOVA FUNÇÃO ADICIONADA ##
+// ==========================================================
+
 /**
- * Busca no backend todos os itens de cotações.
- * @returns {Promise<Array>} Uma promessa que resolve para um array de itens de cotação.
+ * Busca a lista de todas as cotações.
+ * Corresponde à função 'findAll' no seu backend controller.
+ * @returns {Promise<Array>} Uma promessa que resolve para um array de cotações.
  */
 export const getCotacoes = async () => {
   try {
-    // Faz a chamada GET para o endpoint definido no seu controller (exports.findAll)
     const response = await fetch(API_QUOTATIONS_URL);
 
     if (!response.ok) {
-      throw new Error(`Erro ${response.status}: Não foi possível buscar as cotações.`);
+      throw new Error('Não foi possível buscar a lista de cotações.');
     }
 
-    // Retorna os dados em formato JSON
     return await response.json();
-
   } catch (error) {
-    console.error("Falha ao buscar cotações da API:", error);
-    // Propaga o erro para que o componente que chamou a função possa tratá-lo
+    console.error("Falha ao buscar cotações:", error);
     throw error;
   }
 };
 
-// No futuro, você pode adicionar outras funções aqui, como:
-// export const getCotacaoById = async (id) => { ... };
-// export const createCotacao = async (data) => { ... };
+
+// ==========================================================
+// ## Função que já existia para a página de detalhes ##
+// ==========================================================
+
+/**
+ * Busca os detalhes de uma cotação específica pelo seu ID.
+ * @param {string|number} id - O ID da cotação a ser buscada.
+ * @returns {Promise<Object>} Uma promessa que resolve para o objeto da cotação.
+ */
+export const getQuotationById = async (id) => {
+  try {
+    const response = await fetch(`${API_QUOTATIONS_URL}/${id}`);
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('Cotação não encontrada.');
+      }
+      throw new Error('Não foi possível buscar os detalhes da cotação.');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Falha ao buscar cotação ${id}:`, error);
+    throw error;
+  }
+};

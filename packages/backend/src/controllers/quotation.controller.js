@@ -101,6 +101,9 @@ exports.findOne = async (req, res) => {
  * Atualiza uma cotação existente.
  * Esta função é dinâmica e se adapta aos campos enviados no corpo da requisição.
  */
+
+
+
 exports.update = async (req, res) => {
     try {
         const { id } = req.params;
