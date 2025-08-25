@@ -3,21 +3,10 @@ import { Box, Typography, Paper } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { ptBR } from '@mui/x-data-grid/locales';
 
-// --- SIMULAÇÃO DE DADOS DO BANCO ---
-const fetchProductsFromDB = async () => {
-  console.log("Buscando produtos no 'banco de dados'...");
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  const mockProducts = Array.from({ length: 100 }, (_, index) => ({
-    id: index + 1,
-    sku: `SKU-${1000 + index}`,
-    name: `Produto ${String.fromCharCode(65 + (index % 26))}${index}`,
-    category: `Categoria ${Math.ceil((index + 1) / 10)}`,
-    stock: Math.floor(Math.random() * 100),
-  }));
+// ALTERAÇÃO 1: Importar o novo serviço de API.
+import { getProducts } from '../services/productService'; 
 
-  return mockProducts;
-};
+// ALTERAÇÃO 2: A função de simulação foi removida.
 
 export default function ProdutosPage() {
   const [rows, setRows] = useState([]);
@@ -26,14 +15,32 @@ export default function ProdutosPage() {
   useEffect(() => {
     const loadProducts = async () => {
       setLoading(true);
-      const products = await fetchProductsFromDB();
-      setRows(products);
-      setLoading(false);
+      try {
+        // ALTERAÇÃO 3: Chamar a função da API real.
+        const productsFromApi = await getProducts();
+        
+        // ALTERAÇÃO 4: Mapear os dados da API para o formato que a DataGrid espera.
+        const formattedProducts = productsFromApi.map(p => ({
+          id: p.id,
+          sku: p.sku,
+          name: p.nome, // Backend 'nome' -> Frontend 'name'
+          category: p.nome_categoria || `ID: ${p.categoria_id}`, // Usa o nome da categoria se vier do backend
+          // 'stock' foi removido pois não existe no banco de dados. Veja a explicação abaixo.
+        }));
+        
+        setRows(formattedProducts);
+      } catch (error) {
+        // Aqui você pode adicionar um estado de erro para mostrar na tela
+        console.error("Erro ao carregar produtos:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     loadProducts();
   }, []);
 
+  // ALTERAÇÃO 5: A coluna 'stock' foi removida.
   const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'sku', headerName: 'SKU', width: 150 },
@@ -44,7 +51,6 @@ export default function ProdutosPage() {
       flex: 1,
     },
     { field: 'category', headerName: 'Categoria', width: 200 },
-    { field: 'stock', headerName: 'Qtd. de Vendas', type: 'number', width: 140 },
   ];
 
   return (
@@ -57,18 +63,15 @@ export default function ProdutosPage() {
           rows={rows}
           columns={columns}
           loading={loading}
-          
-          // ===== MODIFICAÇÃO AQUI =====
-          pageSizeOptions={[10, 20, 50, 100]} // Opções que o usuário pode escolher
+          pageSizeOptions={[10, 20, 50, 100]}
           initialState={{
             pagination: {
-              paginationModel: { pageSize: 10 }, // Quantidade de itens por página inicial
+              paginationModel: { pageSize: 10 },
             },
             sorting: {
               sortModel: [{ field: 'name', sort: 'asc' }],
             },
           }}
-
           disableRowSelectionOnClick
           localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
         />

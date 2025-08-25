@@ -1,8 +1,46 @@
 const pool = require('../config/database');
 
+/**
+ * Configuração das entidades para a busca global.
+ * O filtro de status foi removido para incluir todos os registros.
+ */
+const searchConfig = [
+    {
+        type: 'produto',
+        table: 'produtos',
+        titleField: 'nome',
+        subtitleField: 'sku',
+        searchFields: ['nome', 'sku'],
+        filter: null // Busca em todos os produtos, independentemente do status.
+    },
+    {
+        type: 'distribuidor',
+        table: 'distribuidores',
+        titleField: 'nome',
+        subtitleField: 'cnpj',
+        searchFields: ['nome', 'cnpj'],
+        filter: null // Busca em todos os distribuidores, independentemente do status.
+    },
+    {
+        type: 'usuario',
+        table: 'usuarios',
+        titleField: 'nome',
+        subtitleField: 'email',
+        searchFields: ['nome', 'email'],
+        filter: null // Busca em todos os usuários, independentemente do status.
+    },
+    {
+        type: 'categoria',
+        table: 'categorias',
+        titleField: 'nome',
+        subtitleField: "'Categoria de produto'",
+        searchFields: ['nome'],
+        filter: null
+    }
+];
+
 exports.globalSearch = async (req, res) => {
-    // 1. Pega o termo de busca da query string da URL (?q=...)
-    const { q } = req.query;
+    const { q, limit = 5 } = req.query; 
 
     if (!q || q.trim() === '') {
         return res.status(400).json({ message: 'O termo de busca não pode ser vazio.' });
@@ -11,64 +49,33 @@ exports.globalSearch = async (req, res) => {
     const searchTerm = `%${q}%`;
 
     try {
-        // 2. Consultas em paralelo, agora adaptadas para a nova estrutura do banco de dados
+        const searchPromises = searchConfig.map(config => {
+            const whereClauses = config.searchFields
+                .map(field => `${field} ILIKE $1`)
+                .join(' OR ');
 
-        // ALTERADO: Busca em 'produtos', usando 'nome' e 'sku', e filtrando por status 'ativo'.
-        const productPromise = pool.query(
-            `SELECT 
-                id, 
-                nome as titulo, 
-                sku as subtitulo, 
-                'produto' as tipo 
-             FROM produtos 
-             WHERE (nome ILIKE $1 OR sku ILIKE $1) AND status = 'ativo'`,
-            [searchTerm]
-        );
+            const query = `
+                SELECT 
+                    id, 
+                    ${config.titleField} AS titulo, 
+                    ${config.subtitleField} AS subtitulo, 
+                    '${config.type}' AS tipo 
+                FROM ${config.table}
+                WHERE (${whereClauses})
+                ${config.filter ? `AND ${config.filter}` : ''}
+                ORDER BY ${config.titleField} ASC
+                LIMIT $2
+            `;
+            
+            return pool.query(query, [searchTerm, limit]);
+        });
 
-        // ALTERADO: Busca em 'distribuidores', usando 'nome' e filtrando por status 'ativo'.
-        const distributorPromise = pool.query(
-            `SELECT 
-                id, 
-                nome as titulo, 
-                cnpj as subtitulo, 
-                'distribuidor' as tipo 
-             FROM distribuidores 
-             WHERE nome ILIKE $1 AND status = 'ativo'`,
-            [searchTerm]
-        );
+        const results = await Promise.all(searchPromises);
+        const allResults = results.flatMap(result => result.rows);
 
-        // NOVO: Adicionada a busca na tabela 'categorias'.
-        const categoryPromise = pool.query(
-            `SELECT 
-                id, 
-                nome as titulo, 
-                'Categoria de produto' as subtitulo, 
-                'categoria' as tipo 
-             FROM categorias 
-             WHERE nome ILIKE $1`,
-            [searchTerm]
-        );
-
-        // REMOVIDO: A busca na tabela 'items' foi removida pois ela não existe mais no novo schema.
-
-        // 3. Executa todas as promises ao mesmo tempo
-        const [productResults, distributorResults, categoryResults] = await Promise.all([
-            productPromise,
-            distributorPromise,
-            categoryPromise,
-        ]);
-
-        // 4. Combina os resultados em um único array
-        const allResults = [
-            ...productResults.rows,
-            ...distributorResults.rows,
-            ...categoryResults.rows,
-        ];
-
-        // 5. Retorna a resposta consolidada
         res.status(200).json(allResults);
 
-    } catch (error) {
+    } catch (error) { // CORREÇÃO: Adicionadas as chaves {} ao redor do bloco catch.
         console.error('Erro na busca global:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }

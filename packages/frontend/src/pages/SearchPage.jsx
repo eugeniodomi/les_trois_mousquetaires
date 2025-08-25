@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Adicionado useEffect
 import {
   Box,
   Typography,
   TextField,
-  Button,
   Grid,
   Card,
   CardContent,
@@ -20,35 +19,12 @@ import {
   FormControlLabel,
   Checkbox,
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+// O ícone de busca não é mais necessário no botão, mas pode ser útil no TextField
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-
-const fakeApiSearch = async (filters) => {
-  console.log("Filtros enviados para a API:", filters);
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  if (filters.searchTerm.trim() === '' || filters.searchAreas.length === 0) return [];
-  
-  let allResults = [];
-
-  if (filters.searchAreas.includes('produtos')) {
-    allResults.push(
-      { id: 'p1', type: 'Produto', title: `Produto: ${filters.searchTerm}`, field1: `Categoria: Eletrônicos` },
-      { id: 'p2', type: 'Produto', title: `Produto: ${filters.searchTerm} Plus`, field1: `SKU: 12345` }
-    );
-  }
-  if (filters.searchAreas.includes('distribuidores')) {
-    allResults.push(
-      { id: 'd1', type: 'Distribuidor', title: `Distribuidor: ${filters.searchTerm}`, field1: `Contato: João Silva` }
-    );
-  }
-  
-  return allResults;
-};
+import { globalSearchApi } from '../services/searchService.js';
 
 const drawerWidth = 320;
-
 
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
   ({ theme, open }) => ({
@@ -71,13 +47,65 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
 
 export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchAreas, setSearchAreas] = useState(['produtos']); 
+  // NOVO ESTADO: Armazena o termo de busca após a pausa na digitação (debouncing)
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [searchAreas, setSearchAreas] = useState(['produto', 'distribuidor', 'usuario', 'categoria']);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const theme = useTheme();
+
+  // EFEITO 1: DEBOUNCING
+  // Este efeito cria um timer para atualizar o 'debouncedSearchTerm' somente
+  // 300ms após o usuário parar de digitar.
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300); // 300ms de atraso
+
+    // Função de limpeza: cancela o timer anterior a cada nova tecla digitada
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [searchTerm]);
+
+  // EFEITO 2: CHAMADA À API
+  // Este efeito é disparado sempre que o 'debouncedSearchTerm' muda.
+  // É aqui que a busca acontece.
+  useEffect(() => {
+    const performSearch = async () => {
+      // Condição: só busca se o termo tiver 3+ caracteres
+      if (debouncedSearchTerm.length >= 3) {
+        setHasSearched(true);
+        setLoading(true);
+        setError('');
+        try {
+          const data = await globalSearchApi(debouncedSearchTerm);
+          // O filtro dos checkboxes continua funcionando aqui no frontend
+          const filteredData = data.filter(item => searchAreas.includes(item.tipo));
+          setResults(filteredData);
+
+          if (filteredData.length === 0 && data.length > 0) {
+            setError("Nenhum resultado encontrado para os filtros selecionados.");
+          }
+        } catch (err) {
+          setError(err.message || 'Houve um erro ao realizar a busca.');
+          console.error(err);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // Limpa os resultados se a busca for muito curta
+        setResults([]);
+        setHasSearched(false);
+        setError('');
+      }
+    };
+
+    performSearch();
+  }, [debouncedSearchTerm, searchAreas]); // Roda a busca de novo se os filtros mudarem também
 
   const handleSearchAreaChange = (event) => {
     const { value, checked } = event.target;
@@ -88,70 +116,56 @@ export default function SearchPage() {
     }
   };
 
-  const handleSearch = async () => {
-    setHasSearched(true);
-    setLoading(true);
-    setError('');
-    setResults([]);
-    const filters = { searchTerm, searchAreas }; 
-    try {
-      const data = await fakeApiSearch(filters);
-      setResults(data);
-    } catch (err) {
-      setError('Houve um erro ao realizar a busca.');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  const formatType = (type) => {
+    if (!type) return '';
+    return type.charAt(0).toUpperCase() + type.slice(1);
   };
 
   return (
     <Box sx={{ display: 'flex' }}>
       <Main open={filtersOpen}>
         <Typography variant="h4" gutterBottom>
-          Busca
+          Busca Inteligente
         </Typography>
 
         <Paper sx={{ p: 2, mb: 4, display: 'flex', alignItems: 'center', gap: 2 }}>
           <TextField
             fullWidth
-            label="Digite o termo da busca" 
+            label="Digite para buscar..."
             variant="outlined"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            // Mostra o spinner de carregamento diretamente no campo de busca
+            InputProps={{
+              endAdornment: loading ? <CircularProgress size={24} /> : null,
+            }}
           />
-          <Button
-            variant="contained"
-            onClick={handleSearch}
-            disabled={loading}
-            startIcon={<SearchIcon />}
-            sx={{ height: '56px', whiteSpace: 'nowrap' }}
-          >
-            {loading ? <CircularProgress size={24} color="inherit" /> : 'Buscar'}
-          </Button>
+          {/* O BOTÃO "BUSCAR" FOI REMOVIDO */}
           <IconButton onClick={() => setFiltersOpen(!filtersOpen)} sx={{ height: '56px', width: '56px' }}>
             {filtersOpen ? <ChevronRightIcon /> : <FilterListIcon />}
           </IconButton>
         </Paper>
 
-        {loading && <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}><CircularProgress /></Box>}
         {error && <Typography color="error">{error}</Typography>}
-        {!loading && hasSearched && results.length === 0 && <Typography>Nenhum resultado.</Typography>}
+        {!loading && hasSearched && results.length === 0 && !error && <Typography>Nenhum resultado encontrado.</Typography>}
+
         <Grid container spacing={3}>
           {results.map((result) => (
-            <Grid item xs={12} sm={6} md={4} key={result.id}>
+            <Grid item xs={12} sm={6} md={4} key={`${result.tipo}-${result.id}`}>
               <Card>
                 <CardContent>
-                  <Typography variant="body2" color="text.secondary">{result.type}</Typography>
-                  <Typography variant="h6">{result.title}</Typography>
-                  <Typography>{result.field1}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {formatType(result.tipo)}
+                  </Typography>
+                  <Typography variant="h6">{result.titulo}</Typography>
+                  <Typography>{result.subtitulo}</Typography>
                 </CardContent>
               </Card>
             </Grid>
           ))}
         </Grid>
       </Main>
-
+      {/* O Drawer de filtros permanece exatamente o mesmo */}
       <Drawer
         variant="persistent"
         anchor="right"
@@ -174,24 +188,20 @@ export default function SearchPage() {
             <FormLabel component="legend">Buscar em:</FormLabel>
             <FormGroup>
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={searchAreas.includes('produtos')}
-                    onChange={handleSearchAreaChange}
-                    value="produtos"
-                  />
-                }
+                control={<Checkbox checked={searchAreas.includes('produto')} onChange={handleSearchAreaChange} value="produto" />}
                 label="Produtos"
               />
               <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={searchAreas.includes('distribuidores')}
-                    onChange={handleSearchAreaChange}
-                    value="distribuidores"
-                  />
-                }
+                control={<Checkbox checked={searchAreas.includes('distribuidor')} onChange={handleSearchAreaChange} value="distribuidor" />}
                 label="Distribuidores"
+              />
+              <FormControlLabel
+                control={<Checkbox checked={searchAreas.includes('usuario')} onChange={handleSearchAreaChange} value="usuario" />}
+                label="Usuários"
+              />
+              <FormControlLabel
+                control={<Checkbox checked={searchAreas.includes('categoria')} onChange={handleSearchAreaChange} value="categoria" />}
+                label="Categorias"
               />
             </FormGroup>
           </FormControl>
