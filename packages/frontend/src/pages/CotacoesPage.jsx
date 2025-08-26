@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Typography, Paper, Chip } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { ptBR } from '@mui/x-data-grid/locales';
 
-// 1. IMPORTAR A FUNÇÃO DE SERVIÇO EM VEZ DE USAR DADOS MOCK
-import { getCotacoes } from '../services/quotationService'; // Ajuste o caminho se necessário
+// Importa a função de serviço que busca os dados reais
+import { getCotacoes } from '../services/quotationService';
 
 export default function CotacoesPage() {
   const [rows, setRows] = useState([]);
@@ -15,68 +15,63 @@ export default function CotacoesPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // 2. FUNÇÃO PARA CARREGAR DADOS REAIS DA API
     const loadCotacoes = async () => {
       try {
         setLoading(true);
         const cotacoesDaApi = await getCotacoes();
-        setRows(cotacoesDaApi); // Define os dados recebidos no estado
+
+        // MAPEAMENTO DOS DADOS: "Traduzimos" os dados da API para o formato da DataGrid
+        const formattedRows = cotacoesDaApi.map(cotacao => ({
+          id: cotacao.id,
+          status: cotacao.status,
+          creationDate: new Date(cotacao.data_criacao), // Campo de data
+          requester: cotacao.usuario_criador, // Nome do solicitante
+          itemCount: cotacao.item_count, // Contagem de itens
+        }));
+        
+        setRows(formattedRows);
       } catch (error) {
-        console.error("Erro ao carregar cotações na página:", error);
-        // Opcional: Adicionar um estado de erro para exibir uma mensagem na UI
+        console.error("Erro ao carregar cotações:", error);
+        // Adicionar um estado de erro para a UI se desejar
       } finally {
         setLoading(false);
       }
     };
 
     loadCotacoes();
-  }, []); // O array vazio garante que isso rode apenas uma vez
+  }, []);
 
   const handleRowClick = (params) => {
-    // A navegação continua funcionando, agora com o ID real do item
+    // A navegação para a página de detalhes continua a mesma
     navigate(`/cotacoes/${params.id}`);
   };
 
-  // 3. COLUNAS ATUALIZADAS PARA CORRESPONDER AOS DADOS DO BACKEND
+  // COLUNAS DEFINIDAS PELA VERSÃO "ORIGINAL" PARA MANTER O LAYOUT
+  // Os 'field' foram ajustados para corresponder aos dados mapeados
   const columns = [
-    { field: 'id', headerName: 'ID Item', width: 100 },
-    { 
-      field: 'produto_nome', 
-      headerName: 'Produto', 
-      width: 250, 
-      flex: 1 
-    },
-    { 
-      field: 'distribuidor_nome', 
-      headerName: 'Distribuidor', 
-      width: 250, 
-      flex: 1 
-    },
+    { field: 'id', headerName: 'ID Cotação', width: 150 },
     {
-      field: 'valor_venda_final',
-      headerName: 'Valor Final (R$)',
-      type: 'number',
+      field: 'status',
+      headerName: 'Status',
       width: 150,
-      valueFormatter: (value) => value ? `R$ ${parseFloat(value).toFixed(2)}` : '',
-    },
-    { 
-      field: 'quantidade', 
-      headerName: 'Quantidade', 
-      type: 'number', 
-      width: 120 
-    },
-    { 
-      field: 'usuario_nome', 
-      headerName: 'Solicitante', 
-      width: 200 
+      renderCell: (params) => {
+        const status = params.value;
+        let color = 'default';
+        if (status === 'Aberta') color = 'primary';
+        if (status === 'Finalizada' || status === 'Fechada') color = 'success';
+        if (status === 'Cancelada') color = 'error';
+        if (status === 'Em Análise') color = 'warning';
+        return <Chip label={status} color={color} size="small" />;
+      },
     },
     {
-      field: 'data_registro',
-      headerName: 'Data de Registro',
-      type: 'dateTime',
+      field: 'creationDate',
+      headerName: 'Data de Criação',
+      type: 'date',
       width: 180,
-      valueGetter: (value) => new Date(value),
     },
+    { field: 'requester', headerName: 'Solicitante', width: 220, flex: 1 },
+    { field: 'itemCount', headerName: 'Nº de Itens', type: 'number', width: 130 },
   ];
 
   return (
@@ -92,7 +87,7 @@ export default function CotacoesPage() {
           pageSizeOptions={[10, 20, 50]}
           initialState={{
             pagination: { paginationModel: { pageSize: 10 } },
-            sorting: { sortModel: [{ field: 'data_registro', sort: 'desc' }] },
+            sorting: { sortModel: [{ field: 'creationDate', sort: 'desc' }] },
           }}
           onRowClick={handleRowClick}
           sx={{ '& .MuiDataGrid-row:hover': { cursor: 'pointer' } }}

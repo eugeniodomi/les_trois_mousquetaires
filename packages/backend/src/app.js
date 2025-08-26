@@ -12,7 +12,10 @@ const productRoutes = require('./routes/product.routes.js');
 const quotationRoutes = require('./routes/quotation.routes.js'); 
 const distributorRoutes = require('./routes/distributor.routes.js');
 const searchRoutes = require('./routes/search.routes.js');
-const authRoutes = require('./routes/authRoutes.js'); // Adicionado .js para consistência
+const authRoutes = require('./routes/authRoutes.routes.js'); // Adicionado .js para consistência
+
+const admCotacoesRoutes = require('./routes/admCotacoes.routes.js');
+
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -40,13 +43,16 @@ const authLimiter = rateLimit({
 app.use('/api/produtos', productRoutes);
 app.use('/api/distribuidores', distributorRoutes);
 // ALTERADO: O endpoint e a variável da rota foram atualizados.
-app.use('/api/cotacoes', quotationRoutes); 
+app.use('/api/dados_cotacoes', quotationRoutes); 
 
 // Rota de busca global
 app.use('/api/search', searchRoutes);
 
 // Rota de autenticação com o limitador de requisições
 app.use('/api/auth', authLimiter, authRoutes);
+
+// A URL da API continua a mesma, pois representa o recurso "cotacoes",
+app.use('/api/cotacoes', admCotacoesRoutes);
 
 // --- 4. Inicialização do Servidor ---
 app.listen(port, () => {
