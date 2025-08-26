@@ -14,11 +14,11 @@ import SearchIcon from '@mui/icons-material/Search';
 import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
-import RequestQuoteIcon from '@mui/icons-material/RequestQuote'; // Ícone para Cotações
+import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
+import PostAddIcon from '@mui/icons-material/PostAdd';
 
 const drawerWidth = 240;
 
-// ... (Componentes AppBar e Drawer - Nenhuma alteração aqui)
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
@@ -140,27 +140,33 @@ export default function Layout() {
           {/* SUB-MENU QUE APARECE E DESAPARECE */}
           <Collapse in={registrosOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              {/* Item "Produtos" aninhado */}
               <ListItemButton component={Link} to="/produtos" sx={{ pl: 4 }}>
                 <ListItemIcon>
                   <InventoryIcon />
                 </ListItemIcon>
                 <ListItemText primary="Produtos" />
               </ListItemButton>
-              {/* Item "Distribuidores" aninhado */}
               <ListItemButton component={Link} to="/distribuidores" sx={{ pl: 4 }}>
                 <ListItemIcon>
                   <GroupIcon />
                 </ListItemIcon>
                 <ListItemText primary="Distribuidores" />
               </ListItemButton>
-              {/* ===== ADAPTAÇÃO AQUI ===== */}
               <ListItemButton component={Link} to="/cotacoes" sx={{ pl: 4 }}>
                 <ListItemIcon>
                   <RequestQuoteIcon />
                 </ListItemIcon>
                 <ListItemText primary="Cotações" />
               </ListItemButton>
+              
+              {/* ✅ CORREÇÃO APLICADA AQUI */}
+              <ListItemButton component={Link} to="/cotacoes/cadastrar" sx={{ pl: 4 }}>
+                <ListItemIcon>
+                  <PostAddIcon />
+                </ListItemIcon>
+                <ListItemText primary="Nova Cotação" />
+              </ListItemButton>
+              
             </List>
           </Collapse>
         </List>

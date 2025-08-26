@@ -4,12 +4,11 @@ import { Routes, Route } from 'react-router-dom';
 
 // 1. IMPORTS NECESSÁRIOS
 import Layout from '../components/layout/Layout';
-import ProtectedRoute from './ProtectedRoute'; // O "segurança" das nossas rotas
-import LoginPage from '../pages/LoginPage';     // A nova página de login
+import ProtectedRoute from './ProtectedRoute';
+import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 
-
-// Imports das páginas existentes (organizados)
+// Imports das páginas
 import HomePage from '../pages/HomePage';
 import ProdutosPage from '../pages/ProdutosPage';
 import DistribuidoresPage from '../pages/DistribuidoresPage';
@@ -17,24 +16,35 @@ import CotacoesPage from '../pages/CotacoesPage';
 import CotacaoDetailPage from '../pages/CotacaoDetailPage';
 import DashboardsPage from '../pages/DashboardsPage';
 import SearchPage from '../pages/SearchPage';
+import CadastroCotacaoPage from '../pages/CadastroCotacaoPage';
 
 export default function AppRoutes() {
   return (
-  
     <Routes>
-      {/* 2. ROTA PÚBLICA: Acessível a todos */}
+      {/* 2. ROTAS PÚBLICAS */}
       <Route path="/login" element={<LoginPage />} />
       <Route path="/registro" element={<RegisterPage />} />
 
-      {/* 3. ROTAS PROTEGIDAS: Só podem ser acessadas após o login */}
+      {/* 3. ROTAS PROTEGIDAS */}
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Layout />}>
-          {/* Todas as suas rotas antigas agora estão aqui dentro */}
           <Route index element={<HomePage />} />
           <Route path="produtos" element={<ProdutosPage />} />
           <Route path="distribuidores" element={<DistribuidoresPage />} />
-          <Route path="cotacoes" element={<CotacoesPage />} />
-          <Route path="cotacoes/:id" element={<CotacaoDetailPage />} />
+          
+          {/* --- ESTRUTURA DE ROTAS DE COTAÇÕES ATUALIZADA --- */}
+          <Route path="cotacoes">
+            {/* Rota para a lista de cotações */}
+            <Route index element={<CotacoesPage />} />
+            
+            {/* ✅ Rota para 'cadastrar' uma nova cotação, evitando conflito */}
+            <Route path="cadastrar" element={<CadastroCotacaoPage />} />
+            
+            {/* Rota para ver o detalhe de uma cotação específica */}
+            <Route path=":id" element={<CotacaoDetailPage />} />
+          </Route>
+          {/* --- FIM DA ATUALIZAÇÃO --- */}
+
           <Route path="dashboards" element={<DashboardsPage />} />
           <Route path="buscar" element={<SearchPage />} />
         </Route>
