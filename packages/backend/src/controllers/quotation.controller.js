@@ -1,187 +1,225 @@
+// backend/src/controllers/admCotacoes.controller.js
+
+// Importa a configuração do banco de dados
 const pool = require('../config/database');
 
-// --- CRUD para os ITENS da Cotação (tabela dados_cotacoes) ---
-
 /**
- * @description Cria um novo item de proposta em uma cotação existente.
- * Esta função corresponde a adicionar a proposta de um distribuidor para um produto.
+ * @description Cria uma nova Cotação Mestre e todos os seus itens associados
+ * dentro de uma única transação para garantir a integridade dos dados.
  */
 exports.create = async (req, res) => {
-  try {
-    // Captura os dados do corpo da requisição, conforme a estrutura REAL do banco de dados.
-    const {
-      cotacao_id,
-      produto_id,
-      distribuidor_id,
-      valor_cout,
-      valor_osc,
-      valor_venda_final,
-      valor_unitario,
-      quantidade,
-      dolar_cotacao,
-      data_retorno,
-      data_cotacao
-    } = req.body;
+    console.log("Backend recebeu para criação:", req.body); // Log para depuração
 
-    // Validação de campos essenciais
-    if (!cotacao_id || !produto_id || !distribuidor_id || !valor_unitario || !quantidade) {
-      return res.status(400).send({ message: "Os campos 'cotacao_id', 'produto_id', 'distribuidor_id', 'valor_unitario' e 'quantidade' são obrigatórios." });
+    const { descricao, usuario_criador_id, itens_cotacao } = req.body;
+
+    if (!descricao || !usuario_criador_id) {
+        return res.status(400).json({ message: "A descrição e o ID do usuário criador são obrigatórios." });
+    }
+    if (!itens_cotacao || !Array.isArray(itens_cotacao) || itens_cotacao.length === 0) {
+        return res.status(400).json({ message: "É necessário enviar pelo menos um item para a cotação." });
     }
 
-    // A query de inserção agora usa as colunas corretas da tabela 'dados_cotacoes'.
-    const query = `
-      INSERT INTO dados_cotacoes (
-        cotacao_id, produto_id, distribuidor_id,
-        valor_cout, valor_osc, valor_venda_final, valor_unitario, quantidade,
-        dolar_cotacao, data_retorno, data_cotacao,
-        data_registro, data_atualizacao
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
-      RETURNING *
-    `;
-    
-    const values = [
-      cotacao_id, produto_id, distribuidor_id,
-      valor_cout, valor_osc, valor_venda_final, valor_unitario, quantidade,
-      dolar_cotacao, data_retorno, data_cotacao
-    ];
+    const client = await pool.connect();
 
-    const { rows } = await pool.query(query, values);
-    res.status(201).json(rows[0]); // Status 201: Created
+    try {
+        await client.query('BEGIN');
 
-  } catch (err) {
-    console.error('ERRO AO CRIAR ITEM DE COTAÇÃO:', err.message);
-    res.status(500).send('Erro no servidor ao criar o item da cotação.');
-  }
+        const cotacaoQuery = `
+            INSERT INTO cotacoes (descricao, usuario_criador_id, status, data_criacao)
+            VALUES ($1, $2, 'Aberta', NOW())
+            RETURNING id;
+        `;
+        const cotacaoValues = [descricao, usuario_criador_id];
+        const cotacaoResult = await client.query(cotacaoQuery, cotacaoValues);
+        const novaCotacaoId = cotacaoResult.rows[0].id;
+
+        const itemPromises = itens_cotacao.map(item => {
+            const itemQuery = `
+                INSERT INTO dados_cotacoes (
+                    cotacao_id, produto_id, distribuidor_id, quantidade, valor_unitario,
+                    valor_cout, valor_osc, valor_venda_final, dolar_cotacao, data_retorno,
+                    data_registro, data_atualizacao
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW());
+            `;
+            const itemValues = [
+                novaCotacaoId,
+                item.produto_id,
+                item.distribuidor_id,
+                item.quantidade,
+                item.valor_unitario || null,
+                item.valor_cout || null,
+                item.valor_osc || null,
+                item.valor_venda_final || null,
+                item.dolar_cotacao || null,
+                item.data_retorno || null
+            ];
+            return client.query(itemQuery, itemValues);
+        });
+
+        await Promise.all(itemPromises);
+        await client.query('COMMIT');
+
+        res.status(201).json({
+            message: "Cotação e seus itens criados com sucesso!",
+            cotacao_id: novaCotacaoId
+        });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error("ERRO NA TRANSAÇÃO DO BACKEND:", error);
+        res.status(500).json({ message: "Erro interno no servidor ao criar a cotação." });
+
+    } finally {
+        client.release();
+    }
 };
 
 /**
- * @description Busca todos os itens de cotação, com informações de produtos e distribuidores.
+ * @description Lista todas as cotações mestras cadastradas.
  */
 exports.findAll = async (req, res) => {
-  try {
-    // Query com JOINs para trazer dados mais completos e úteis para o front-end
-    const query = `
-      SELECT
-        dc.id,
-        dc.cotacao_id,
-        p.nome AS produto_nome,
-        p.sku AS produto_sku,
-        d.nome AS distribuidor_nome,
-        dc.quantidade,
-        dc.valor_unitario,
-        dc.valor_venda_final,
-        dc.data_registro
-      FROM dados_cotacoes dc
-      JOIN produtos p ON dc.produto_id = p.id
-      JOIN distribuidores d ON dc.distribuidor_id = d.id
-      ORDER BY dc.data_registro DESC
-    `;
-    const { rows } = await pool.query(query);
-    res.json(rows);
-  } catch (err) {
-    console.error('ERRO AO BUSCAR ITENS DE COTAÇÃO:', err.message);
-    res.status(500).send('Erro no servidor');
-  }
+    try {
+        const query = "SELECT * FROM cotacoes ORDER BY data_criacao DESC";
+        const { rows } = await pool.query(query);
+        res.json(rows);
+    } catch (error) {
+        console.error("ERRO AO LISTAR COTAÇÕES:", error);
+        res.status(500).json({ message: "Ocorreu um erro ao buscar as cotações." });
+    }
 };
 
 /**
- * @description Busca um item de cotação específico pelo seu ID.
+ * @description Busca uma cotação mestre pelo ID e todos os seus itens associados.
  */
 exports.findOne = async (req, res) => {
     try {
         const { id } = req.params;
-        // Query com JOINs para trazer dados completos também na busca individual
+
+        if (isNaN(parseInt(id, 10))) {
+            return res.status(400).json({ message: `O ID da cotação deve ser um número. Valor recebido: '${id}'` });
+        }
+
+        // --- QUERY CORRIGIDA ---
         const query = `
-          SELECT
-            dc.*,
-            p.nome AS produto_nome,
-            d.nome AS distribuidor_nome
-          FROM dados_cotacoes dc
-          JOIN produtos p ON dc.produto_id = p.id
-          JOIN distribuidores d ON dc.distribuidor_id = d.id
-          WHERE dc.id = $1
+            SELECT
+                c.*,
+                u.nome as usuario_criador_nome, -- ADICIONADO: Busca o nome do usuário criador
+                COALESCE(
+                    (
+                        SELECT json_agg(items_data)
+                        FROM (
+                            SELECT
+                                dc.id, 
+                                dc.quantidade, 
+                                dc.valor_unitario, 
+                                dc.valor_venda_final, 
+                                dc.data_retorno, 
+                                dc.data_cotacao, 
+                                dc.data_registro,
+                                dc.valor_cout, -- <<< ADICIONADO
+                                dc.valor_osc,   -- <<< ADICIONADO
+                                p.nome as produto_nome, 
+                                p.sku as produto_sku,
+                                d.nome as distribuidor_nome
+                            FROM dados_cotacoes dc
+                            LEFT JOIN produtos p ON dc.produto_id = p.id
+                            LEFT JOIN distribuidores d ON dc.distribuidor_id = d.id
+                            WHERE dc.cotacao_id = c.id
+                        ) as items_data
+                    ), '[]'::json
+                ) as itens_cotacao
+            FROM cotacoes c
+            LEFT JOIN usuarios u ON c.usuario_criador_id = u.id -- ADICIONADO: Junta com a tabela de usuários
+            WHERE c.id = $1;
         `;
+
         const { rows } = await pool.query(query, [id]);
 
         if (rows.length > 0) {
             res.json(rows[0]);
         } else {
-            res.status(404).send({ message: `Item de cotação com id=${id} não encontrado.` });
+            res.status(404).json({ message: `Cotação com id=${id} não encontrada.` });
         }
-    } catch (err) {
-        console.error('ERRO AO BUSCAR ITEM DE COTAÇÃO:', err.message);
-        res.status(500).send('Erro no servidor');
+    } catch (error) {
+        console.error("ERRO AO BUSCAR COTAÇÃO ÚNICA:", error);
+        res.status(500).json({ message: "Erro ao buscar a cotação com id=" + req.params.id });
     }
 };
 
 /**
- * @description Atualiza um item de cotação usando lógica dinâmica.
+ * @description Atualiza uma cotação (ex: mudar a descrição ou o status).
  */
 exports.update = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const campos = req.body;
-    const chaves = Object.keys(campos);
+    try {
+        const { id } = req.params;
+        const campos = req.body;
+        const chaves = Object.keys(campos);
 
-    if (chaves.length === 0) {
-      return res.status(400).send({ message: "Corpo da requisição não pode ser vazio para atualização." });
+        if (chaves.length === 0) {
+            return res.status(400).json({ message: "O corpo da requisição não pode ser vazio." });
+        }
+
+        const setClauses = [];
+        const values = [];
+        let paramIndex = 1;
+
+        for (const chave of chaves) {
+            // Evita que o cliente possa atualizar campos sensíveis
+            if (chave !== 'id' && chave !== 'usuario_criador_id' && chave !== 'data_criacao') {
+                setClauses.push(`"${chave}" = $${paramIndex}`);
+                values.push(campos[chave]);
+                paramIndex++;
+            }
+        }
+
+        if (campos.status && campos.status.toLowerCase() === 'fechada') {
+            setClauses.push(`data_fechamento = NOW()`);
+        }
+
+        values.push(id);
+
+        const query = `
+            UPDATE cotacoes 
+            SET ${setClauses.join(', ')} 
+            WHERE id = $${paramIndex}
+            RETURNING *;
+        `;
+        
+        const { rows } = await pool.query(query, values);
+        
+        if (rows.length > 0) {
+            res.json({ message: "Cotação atualizada com sucesso.", cotacao: rows[0] });
+        } else {
+            res.status(404).json({ message: `Não foi possível encontrar e atualizar a cotação com id=${id}.` });
+        }
+    } catch (error) {
+        console.error("ERRO AO ATUALIZAR COTAÇÃO:", error);
+        res.status(500).json({ message: "Erro ao atualizar a cotação com id=" + req.params.id });
     }
-
-    const setClauses = [];
-    const values = [];
-    let paramIndex = 1;
-
-    for (const chave of chaves) {
-      // Evita que chaves primárias ou de controle sejam atualizadas pelo body
-      if (chave !== 'id' && chave !== 'cotacao_id' && chave !== 'produto_id') { 
-        setClauses.push(`"${chave}" = $${paramIndex}`);
-        values.push(campos[chave]);
-        paramIndex++;
-      }
-    }
-
-    // Adiciona a atualização automática do campo 'data_atualizacao'
-    setClauses.push(`data_atualizacao = NOW()`);
-    values.push(id);
-
-    const query = `
-      UPDATE dados_cotacoes
-      SET ${setClauses.join(', ')}
-      WHERE id = $${paramIndex}
-      RETURNING *
-    `;
-
-    const { rows } = await pool.query(query, values);
-
-    if (rows.length > 0) {
-      res.json({ message: "Item de cotação atualizado com sucesso.", item: rows[0] });
-    } else {
-      res.status(404).send({ message: `Não foi possível encontrar e atualizar o item com id=${id}.` });
-    }
-  } catch (err) {
-    console.error('ERRO AO ATUALIZAR ITEM DE COTAÇÃO:', err.message);
-    res.status(500).send('Erro no servidor');
-  }
 };
 
 /**
- * @description Deleta permanentemente um item de proposta de cotação.
- * Como esta tabela não possui status, a deleção é permanente (hard delete).
+ * @description Deleta (desativa) uma cotação, mudando seu status para 'Cancelada'.
  */
 exports.delete = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const query = 'DELETE FROM dados_cotacoes WHERE id = $1';
-    const result = await pool.query(query, [id]);
+    try {
+        const { id } = req.params;
+        const query = `
+            UPDATE cotacoes 
+            SET status = 'Cancelada'
+            WHERE id = $1
+            RETURNING id;
+        `;
+        const result = await pool.query(query, [id]);
 
-    if (result.rowCount === 1) {
-      res.json({ message: 'Item de cotação deletado com sucesso!' });
-    } else {
-      res.status(404).send({ message: `Item de cotação com id=${id} não foi encontrado.` });
+        if (result.rowCount > 0) {
+            res.json({ message: "Cotação cancelada com sucesso!" });
+        } else {
+            res.status(404).json({ message: `Não foi possível cancelar a cotação com id=${id}.` });
+        }
+    } catch (error) {
+        console.error("ERRO AO CANCELAR COTAÇÃO:", error);
+        res.status(500).json({ message: "Não foi possível cancelar a cotação com id=" + req.params.id });
     }
-  } catch (err) {
-    console.error('ERRO AO DELETAR ITEM DE COTAÇÃO:', err.message);
-    res.status(500).send('Erro no servidor');
-  }
 };

@@ -34,14 +34,18 @@ exports.create = async (req, res) => {
         const novaCotacaoId = cotacaoResult.rows[0].id;
 
         const itemPromises = itens_cotacao.map(item => {
+            // QUERY CORRIGIDA PARA INCLUIR data_cotacao
             const itemQuery = `
                 INSERT INTO dados_cotacoes (
                     cotacao_id, produto_id, distribuidor_id, quantidade, valor_unitario,
-                    valor_cout, valor_osc, valor_venda_final, dolar_cotacao, data_retorno,
+                    valor_cout, valor_osc, valor_venda_final, dolar_cotacao, 
+                    data_cotacao, -- <<< CAMPO ADICIONADO
+                    data_retorno,
                     data_registro, data_atualizacao
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW());
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW());
             `;
+            // VALORES CORRIGIDOS PARA INCLUIR item.data_cotacao
             const itemValues = [
                 novaCotacaoId,
                 item.produto_id,
@@ -52,6 +56,7 @@ exports.create = async (req, res) => {
                 item.valor_osc || null,
                 item.valor_venda_final || null,
                 item.dolar_cotacao || null,
+                item.data_cotacao || null, // <<< VALOR ADICIONADO
                 item.data_retorno || null
             ];
             return client.query(itemQuery, itemValues);
@@ -92,6 +97,9 @@ exports.findAll = async (req, res) => {
 /**
  * @description Busca uma cotação mestre pelo ID e todos os seus itens associados.
  */
+/**
+ * @description Busca uma cotação mestre pelo ID e todos os seus itens associados.
+ */
 exports.findOne = async (req, res) => {
     try {
         const { id } = req.params;
@@ -100,25 +108,37 @@ exports.findOne = async (req, res) => {
             return res.status(400).json({ message: `O ID da cotação deve ser um número. Valor recebido: '${id}'` });
         }
 
+        // --- QUERY CORRIGIDA ---
         const query = `
             SELECT
                 c.*,
+                u.nome as usuario_criador_nome, -- ADICIONADO: Busca o nome do usuário criador
                 COALESCE(
                     (
                         SELECT json_agg(items_data)
                         FROM (
                             SELECT
-                                dc.id, dc.quantidade, dc.valor_unitario, dc.valor_venda_final, dc.data_retorno, dc.data_cotacao, dc.data_registro,
-                                p.nome as produto_nome, p.sku as produto_sku,
+                                dc.id, 
+                                dc.quantidade, 
+                                dc.valor_unitario, 
+                                dc.valor_venda_final, 
+                                dc.data_retorno, 
+                                dc.data_cotacao, 
+                                dc.data_registro,
+                                dc.valor_cout, -- <<< GARANTE QUE ESTE CAMPO SEJA BUSCADO
+                                dc.valor_osc,   -- <<< GARANTE QUE ESTE CAMPO SEJA BUSCADO
+                                p.nome as produto_nome, 
+                                p.sku as produto_sku,
                                 d.nome as distribuidor_nome
                             FROM dados_cotacoes dc
-                            JOIN produtos p ON dc.produto_id = p.id
-                            JOIN distribuidores d ON dc.distribuidor_id = d.id
+                            LEFT JOIN produtos p ON dc.produto_id = p.id
+                            LEFT JOIN distribuidores d ON dc.distribuidor_id = d.id
                             WHERE dc.cotacao_id = c.id
                         ) as items_data
                     ), '[]'::json
-                ) as itens
+                ) as itens_cotacao
             FROM cotacoes c
+            LEFT JOIN usuarios u ON c.usuario_criador_id = u.id -- ADICIONADO: Junta com a tabela de usuários
             WHERE c.id = $1;
         `;
 

@@ -46,6 +46,11 @@ export default function CotacaoDetailPage() {
       setError('');
       try {
         const data = await getQuotationById(id);
+        // A API deve retornar a lista de itens no campo 'itens_cotacao'
+        // Para manter compatibilidade com o código original, renomeamos para 'itens'
+        if (data.itens_cotacao) {
+          data.itens = data.itens_cotacao;
+        }
         setQuote(data);
       } catch (err) {
         setError(err.message || 'Ocorreu um erro ao buscar a cotação.');
@@ -56,16 +61,15 @@ export default function CotacaoDetailPage() {
     loadQuoteDetails();
   }, [id]);
 
-  // --- Funções de cálculo para os totais ---
+  // --- Funções de cálculo para os totais (CORRIGIDO) ---
   const calculateTotal = (field) => {
     if (!quote || !quote.itens) return 0;
-    return quote.itens.reduce((sum, item) => sum + (Number(item[field]) || 0), 0);
+    // A lógica correta é somar (quantidade * valor) para cada item
+    return quote.itens.reduce((sum, item) => {
+      const itemTotal = (Number(item.quantidade) || 0) * (Number(item[field]) || 0);
+      return sum + itemTotal;
+    }, 0);
   };
-  
-  const calculateTotalVenda = () => {
-    if (!quote || !quote.itens) return 0;
-    return quote.itens.reduce((sum, item) => sum + ( (item.quantidade || 0) * (item.valor_unitario || 0) ), 0);
-  }
 
   if (loading) {
     return <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}><CircularProgress /></Box>;
@@ -92,14 +96,7 @@ export default function CotacaoDetailPage() {
   }
 
   return (
-  <> {/* PASSO 1: Adicione esta tag de abertura do fragmento */}
-
-      {/* PASSO 2: Adicione o título de diagnóstico aqui */}
-      <h1 style={{ color: 'red', textAlign: 'center' }}>
-        EU SOU A PÁGINA DE DETALHES
-      </h1>
-
-    <Box>
+    <Box sx={{ p: 2 }}>
       <Button
         variant="outlined"
         startIcon={<ArrowBackIcon />}
@@ -118,66 +115,72 @@ export default function CotacaoDetailPage() {
         </Typography>
         <Divider sx={{ my: 2 }} />
         
-        {/* LAYOUT RESTAURADO PARA O FORMATO ORIGINAL DE 3 COLUNAS */}
         <Grid container spacing={3}>
-          {/* Coluna 1: Informações Gerais */}
+          {/* Coluna 1: Informações Gerais (CORRIGIDO) */}
           <Grid item xs={12} md={4}>
             <Typography variant="h6">Informações Gerais</Typography>
             <Typography><strong>Status:</strong> {quote.status || 'N/A'}</Typography>
-            <Typography><strong>Solicitante:</strong> N/A</Typography>
-            <Typography><strong>Inserido por (ID):</strong> {quote.usuario_criador_id || 'N/A'}</Typography>
+            {/* Assumindo que a API retorna o campo 'usuario_criador_nome' */}
+            <Typography><strong>Criado por:</strong> {quote.usuario_criador_nome || `ID: ${quote.usuario_criador_id}`}</Typography>
           </Grid>
           
-          {/* Coluna 2: Detalhes Financeiros (com totais calculados) */}
+          {/* Coluna 2: Detalhes Financeiros (CORRIGIDO) */}
           <Grid item xs={12} md={4}>
             <Typography variant="h6">Totais Financeiros</Typography>
-            <Typography><strong>Distribuidor(es):</strong> Múltiplos (ver tabela)</Typography>
-            <Typography><strong>Cond. Pagamento:</strong> N/A</Typography>
-            <Typography><strong>Valor OSC Total:</strong> {formatCurrency(calculateTotal('valor_osc'))}</Typography>
-            <Typography><strong>Valor Venda Total:</strong> {formatCurrency(calculateTotalVenda())}</Typography>
-            <Typography><strong>Valor Cout Total:</strong> {formatCurrency(calculateTotal('valor_cout'))}</Typography>
+            <Typography><strong>Total Quote:</strong> {formatCurrency(calculateTotal('valor_cout'))}</Typography>
+            <Typography><strong>Total OSC:</strong> {formatCurrency(calculateTotal('valor_osc'))}</Typography>
+            <Typography><strong>Total Venda Final:</strong> {formatCurrency(calculateTotal('valor_venda_final'))}</Typography>
           </Grid>
 
-          {/* Coluna 3: Datas */}
+          {/* Coluna 3: Datas (CORRIGIDO) */}
           <Grid item xs={12} md={4}>
             <Typography variant="h6">Datas Relevantes</Typography>
-            <Typography><strong>Data de Solicitação:</strong> {formatDate(quote.data_criacao)}</Typography>
-            <Typography><strong>Data de Fechamento:</strong> {formatDate(quote.data_fechamento)}</Typography>
-            <Typography><strong>Outras Datas:</strong> Ver itens abaixo</Typography>
+            <Typography><strong>Data de Criação:</strong> {formatDateTime(quote.data_criacao)}</Typography>
+            <Typography><strong>Data de Fechamento:</strong> {formatDateTime(quote.data_fechamento)}</Typography>
+            {/* LINHAS ADICIONADAS CONFORME SOLICITADO */}
+            <Typography><strong>Data da Cotação (Item):</strong> {formatDate(quote.itens?.[0]?.data_cotacao)}</Typography>
+            <Typography><strong>Data de Retorno (Item):</strong> {formatDate(quote.itens?.[0]?.data_retorno)}</Typography>
           </Grid>
         </Grid>
 
         <Divider sx={{ my: 3 }} />
 
-        {/* TABELA DE ITENS DA COTAÇÃO (permanece a mesma, pois já estava correta) */}
         <Typography variant="h5" gutterBottom>
           Itens da Cotação
         </Typography>
-        <TableContainer component={Paper}>
+        <TableContainer component={Paper} variant="outlined">
           <Table>
             <TableHead>
+              {/* Cabeçalho da Tabela (CORRIGIDO) */}
               <TableRow>
                 <TableCell>Produto (SKU)</TableCell>
                 <TableCell>Distribuidor</TableCell>
-                <TableCell>Data da Cotação</TableCell>
-                <TableCell>Data de Retorno</TableCell>
-                <TableCell>Data de Registro</TableCell>
-                <TableCell align="right">Quantidade</TableCell>
+                <TableCell align="right">Qtd.</TableCell>
                 <TableCell align="right">Valor Unitário</TableCell>
+                <TableCell align="right">Valor Quote</TableCell>
+                <TableCell align="right">Valor OSC</TableCell>
+                <TableCell align="right">Venda Final</TableCell>
                 <TableCell align="right">Subtotal</TableCell>
+                <TableCell>Data Cotação</TableCell>
+                {/* COLUNA ADICIONADA */}
+                <TableCell>Data Retorno</TableCell> 
               </TableRow>
             </TableHead>
             <TableBody>
+              {/* Corpo da Tabela (CORRIGIDO) */}
               {quote.itens && quote.itens.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>{`${item.produto_nome} (${item.produto_sku})`}</TableCell>
-                  <TableCell>{item.distribuidor_nome}</TableCell>
-                  <TableCell>{formatDate(item.data_cotacao)}</TableCell>
-                  <TableCell>{formatDate(item.data_retorno)}</TableCell>
-                  <TableCell>{formatDateTime(item.data_registro)}</TableCell>
+                  <TableCell>{`${item.produto_nome || 'N/A'} (${item.produto_sku || 'N/A'})`}</TableCell>
+                  <TableCell>{item.distribuidor_nome || 'N/A'}</TableCell>
                   <TableCell align="right">{item.quantidade}</TableCell>
                   <TableCell align="right">{formatCurrency(item.valor_unitario)}</TableCell>
-                  <TableCell align="right">{formatCurrency(item.quantidade * (item.valor_unitario || 0))}</TableCell>
+                  <TableCell align="right">{formatCurrency(item.valor_cout)}</TableCell>
+                  <TableCell align="right">{formatCurrency(item.valor_osc)}</TableCell>
+                  <TableCell align="right">{formatCurrency(item.valor_venda_final)}</TableCell>
+                  <TableCell align="right">{formatCurrency(item.quantidade * (item.valor_venda_final || item.valor_unitario || 0))}</TableCell>
+                  <TableCell>{formatDate(item.data_cotacao)}</TableCell>
+                  {/* DADO DA COLUNA ADICIONADO */}
+                  <TableCell>{formatDate(item.data_retorno)}</TableCell> 
                 </TableRow>
               ))}
             </TableBody>
@@ -185,7 +188,5 @@ export default function CotacaoDetailPage() {
         </TableContainer>
       </Paper>
     </Box>
-    
-  </> // PASSO 3: Não se esqueça de fechar o fragmento no final
   );
 }
