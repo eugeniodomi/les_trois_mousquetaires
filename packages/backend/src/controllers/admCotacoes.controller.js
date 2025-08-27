@@ -1,3 +1,5 @@
+// backend/src/controllers/admCotacoes.controller.js
+
 // Importa a configuração do banco de dados
 const pool = require('../config/database');
 
@@ -6,10 +8,10 @@ const pool = require('../config/database');
  * dentro de uma única transação para garantir a integridade dos dados.
  */
 exports.create = async (req, res) => {
-    // 1. Extrai os dados da cotação mestre e o array de itens do corpo da requisição
+    console.log("Backend recebeu para criação:", req.body); // Log para depuração
+
     const { descricao, usuario_criador_id, itens_cotacao } = req.body;
 
-    // 2. Validação dos dados recebidos
     if (!descricao || !usuario_criador_id) {
         return res.status(400).json({ message: "A descrição e o ID do usuário criador são obrigatórios." });
     }
@@ -17,14 +19,11 @@ exports.create = async (req, res) => {
         return res.status(400).json({ message: "É necessário enviar pelo menos um item para a cotação." });
     }
 
-    // 3. Inicia a conexão com o cliente do pool do PostgreSQL
     const client = await pool.connect();
 
     try {
-        // 4. Inicia a transação
         await client.query('BEGIN');
 
-        // 5. Insere a cotação mestre na tabela 'cotacoes' e obtém o ID gerado
         const cotacaoQuery = `
             INSERT INTO cotacoes (descricao, usuario_criador_id, status, data_criacao)
             VALUES ($1, $2, 'Aberta', NOW())
@@ -34,7 +33,6 @@ exports.create = async (req, res) => {
         const cotacaoResult = await client.query(cotacaoQuery, cotacaoValues);
         const novaCotacaoId = cotacaoResult.rows[0].id;
 
-        // 6. Prepara as queries para inserir todos os itens da cotação
         const itemPromises = itens_cotacao.map(item => {
             const itemQuery = `
                 INSERT INTO dados_cotacoes (
@@ -45,7 +43,7 @@ exports.create = async (req, res) => {
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW());
             `;
             const itemValues = [
-                novaCotacaoId, // Usa o ID da cotação mestre recém-criada
+                novaCotacaoId,
                 item.produto_id,
                 item.distribuidor_id,
                 item.quantidade,
@@ -59,30 +57,23 @@ exports.create = async (req, res) => {
             return client.query(itemQuery, itemValues);
         });
 
-        // 7. Executa todas as inserções dos itens em paralelo
         await Promise.all(itemPromises);
-
-        // 8. Se tudo deu certo, commita a transação
         await client.query('COMMIT');
 
-        // 9. Retorna a resposta de sucesso com o ID da nova cotação
         res.status(201).json({
             message: "Cotação e seus itens criados com sucesso!",
             cotacao_id: novaCotacaoId
         });
 
     } catch (error) {
-        // 10. Se qualquer passo falhou, faz o rollback da transação
         await client.query('ROLLBACK');
-        console.error("ERRO AO CRIAR COTAÇÃO EM TRANSAÇÃO:", error);
-        res.status(500).json({ message: "Ocorreu um erro ao criar a cotação. Nenhuma informação foi salva." });
+        console.error("ERRO NA TRANSAÇÃO DO BACKEND:", error);
+        res.status(500).json({ message: "Erro interno no servidor ao criar a cotação." });
 
     } finally {
-        // 11. Libera o cliente de volta para o pool, independentemente do resultado
         client.release();
     }
 };
-
 
 /**
  * @description Lista todas as cotações mestras cadastradas.
@@ -105,13 +96,9 @@ exports.findOne = async (req, res) => {
     try {
         const { id } = req.params;
 
-        // --- ALTERAÇÃO APLICADA ---
-        // Verifica se o ID fornecido é um número inteiro. Se não for, retorna um erro
-        // 400 (Bad Request) em vez de causar um erro 500 no banco de dados.
         if (isNaN(parseInt(id, 10))) {
             return res.status(400).json({ message: `O ID da cotação deve ser um número. Valor recebido: '${id}'` });
         }
-        // --- FIM DA ALTERAÇÃO ---
 
         const query = `
             SELECT
@@ -121,7 +108,7 @@ exports.findOne = async (req, res) => {
                         SELECT json_agg(items_data)
                         FROM (
                             SELECT
-                                dc.id, dc.quantidade, dc.valor_unitario, dc.valor_venda_final,
+                                dc.id, dc.quantidade, dc.valor_unitario, dc.valor_venda_final, dc.data_retorno, dc.data_cotacao, dc.data_registro,
                                 p.nome as produto_nome, p.sku as produto_sku,
                                 d.nome as distribuidor_nome
                             FROM dados_cotacoes dc
@@ -166,9 +153,12 @@ exports.update = async (req, res) => {
         let paramIndex = 1;
 
         for (const chave of chaves) {
-            setClauses.push(`"${chave}" = $${paramIndex}`);
-            values.push(campos[chave]);
-            paramIndex++;
+            // Evita que o cliente possa atualizar campos sensíveis
+            if (chave !== 'id' && chave !== 'usuario_criador_id' && chave !== 'data_criacao') {
+                setClauses.push(`"${chave}" = $${paramIndex}`);
+                values.push(campos[chave]);
+                paramIndex++;
+            }
         }
 
         if (campos.status && campos.status.toLowerCase() === 'fechada') {
@@ -178,14 +168,14 @@ exports.update = async (req, res) => {
         values.push(id);
 
         const query = `
-            UPDATE cotacoes
-            SET ${setClauses.join(', ')}
+            UPDATE cotacoes 
+            SET ${setClauses.join(', ')} 
             WHERE id = $${paramIndex}
             RETURNING *;
         `;
-
+        
         const { rows } = await pool.query(query, values);
-
+        
         if (rows.length > 0) {
             res.json({ message: "Cotação atualizada com sucesso.", cotacao: rows[0] });
         } else {
@@ -204,7 +194,7 @@ exports.delete = async (req, res) => {
     try {
         const { id } = req.params;
         const query = `
-            UPDATE cotacoes
+            UPDATE cotacoes 
             SET status = 'Cancelada'
             WHERE id = $1
             RETURNING id;
