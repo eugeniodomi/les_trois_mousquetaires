@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'; // Importa useRef
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Grid, TextField, Button, Box, Paper, IconButton,
@@ -29,6 +29,7 @@ const itemCotacaoInicial = {
   valor_venda_final: '',
   valor_unitario: '',
   dolar_cotacao: '',
+  data_cotacao: '',
   data_retorno: '',
 };
 
@@ -61,8 +62,6 @@ function CadastroCotacaoPage() {
           getDistributors()
         ]);
 
-        // --- CORREÇÃO: Remove duplicatas das listas recebidas da API ---
-        // Isso garante que o Autocomplete não receba chaves duplicadas.
         const uniqueProdutos = Array.from(new Map(produtosData.map(item => [item.id, item])).values());
         const uniqueDistribuidores = Array.from(new Map(distribuidoresData.map(item => [item.id, item])).values());
 
@@ -78,7 +77,7 @@ function CadastroCotacaoPage() {
     carregarDados();
   }, []);
 
-  // --- HANDLERS ---
+  // --- HANDLERS (sem alterações) ---
   const handleCotacaoChange = (event) => {
     const { name, value } = event.target;
     setCotacao((prev) => ({ ...prev, [name]: value }));
@@ -94,15 +93,10 @@ function CadastroCotacaoPage() {
     novosItens[index][name] = value ? value.id : null;
     setItens(novosItens);
   };
-  
   const adicionarItem = () => {
-    const novoItem = {
-      ...itemCotacaoInicial,
-      uniqueId: `temp_${nextItemId.current++}`
-    };
+    const novoItem = { ...itemCotacaoInicial, uniqueId: `temp_${nextItemId.current++}` };
     setItens([...itens, novoItem]);
   };
-
   const removerItem = (index) => {
     if (itens.length > 1) setItens(itens.filter((_, i) => i !== index));
   };
@@ -110,23 +104,15 @@ function CadastroCotacaoPage() {
     if (reason === 'clickaway') return;
     setNotification({ ...notification, open: false });
   };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     setFormLoading(true);
-
-    const payload = {
-      ...cotacao,
-      itens_cotacao: itens,
-    };
-
+    const payload = { ...cotacao, itens_cotacao: itens };
     try {
       const response = await createQuotation(payload);
-      console.log('Cotação criada com sucesso:', response);
       setNotification({ open: true, message: 'Cotação salva com sucesso!', severity: 'success' });
       setTimeout(() => navigate('/cotacoes'), 1500);
     } catch (error) {
-      console.error("Erro ao salvar cotação:", error);
       setNotification({ open: true, message: error.message || 'Erro ao salvar a cotação.', severity: 'error' });
       setFormLoading(false);
     }
@@ -141,18 +127,21 @@ function CadastroCotacaoPage() {
 
   return (
     <>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      {/* --- MUDANÇA 1: AUMENTANDO A LARGURA MÁXIMA DA PÁGINA --- */}
+      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
         <Paper sx={{ p: 3 }}>
           <Typography variant="h4" component="h1" gutterBottom>
             Cadastro de Nova Cotação
           </Typography>
           <Box component="form" onSubmit={handleSubmit}>
+            
             <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={7}>
                 <TextField name="descricao" label="Descrição da Cotação" value={cotacao.descricao} onChange={handleCotacaoChange} fullWidth required />
               </Grid>
-              <Grid item xs={12} md={3}>
-                <FormControl fullWidth required>
+              <Grid item xs={12} md={5}>
+                {/* --- MUDANÇA 2: FORÇANDO LARGURA MÍNIMA NO CAMPO DE USUÁRIO --- */}
+                <FormControl fullWidth required sx={{ minWidth: 280 }}>
                   <InputLabel id="usuario-criador-label">Usuário Criador</InputLabel>
                   <Select
                     labelId="usuario-criador-label" name="usuario_criador_id"
@@ -164,7 +153,7 @@ function CadastroCotacaoPage() {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={3}>
+              <Grid item xs={12}>
                 <FormControl fullWidth>
                   <InputLabel id="status-label">Status</InputLabel>
                   <Select labelId="status-label" name="status" value={cotacao.status} label="Status" disabled >
@@ -179,77 +168,53 @@ function CadastroCotacaoPage() {
             {itens.map((item, index) => (
               <Paper key={item.uniqueId} variant="outlined" sx={{ p: 2, mb: 2 }}>
                 <Grid container spacing={2} alignItems="center">
-                  <Grid item xs={12} md={6}>
+                  
+                  <Grid item xs={12}>
+                    {/* --- MUDANÇA 2: FORÇANDO LARGURA MÍNIMA NO CAMPO DE PRODUTO --- */}
                     <Autocomplete
                       options={produtos}
                       getOptionLabel={(option) => `${option.nome} (SKU: ${option.sku || 'N/A'})`}
                       value={produtos.find(p => p.id === item.produto_id) || null}
                       onChange={(event, newValue) => handleAutocompleteChange(index, 'produto_id', newValue)}
                       isOptionEqualToValue={(option, value) => option.id === value.id}
-                      renderInput={(params) => <TextField {...params} label="Produto" required />}
-                      renderOption={(props, option) => (
-                        <li {...props} key={option.id}>
-                          {`${option.nome} (SKU: ${option.sku || 'N/A'})`}
-                        </li>
-                      )}
+                      renderInput={(params) => <TextField {...params} label="Produto" required fullWidth />}
+                      sx={{ minWidth: 300 }}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+
+                  <Grid item xs={12}>
+                    {/* --- MUDANÇA 2: FORÇANDO LARGURA MÍNIMA NO CAMPO DE DISTRIBUIDOR --- */}
                     <Autocomplete
                       options={distribuidores}
                       getOptionLabel={(option) => option.nome}
                       value={distribuidores.find(d => d.id === item.distribuidor_id) || null}
                       onChange={(event, newValue) => handleAutocompleteChange(index, 'distribuidor_id', newValue)}
                       isOptionEqualToValue={(option, value) => option.id === value.id}
-                      renderInput={(params) => <TextField {...params} label="Distribuidor" required />}
-                      renderOption={(props, option) => (
-                        <li {...props} key={option.id}>
-                          {option.nome}
-                        </li>
-                      )}
+                      renderInput={(params) => <TextField {...params} label="Distribuidor" required fullWidth />}
+                      sx={{ minWidth: 300 }}
                     />
                   </Grid>
-                  <Grid item xs={6} sm={4} md={2}>
-                    <TextField name="quantidade" label="Quantidade" type="number" value={item.quantidade} onChange={(e) => handleItemChange(index, e)} fullWidth required/>
-                  </Grid>
-                  <Grid item xs={6} sm={4} md={2}>
-                    <TextField name="valor_unitario" label="Valor Unitário" type="number" value={item.valor_unitario} onChange={(e) => handleItemChange(index, e)} fullWidth/>
-                  </Grid>
-                  <Grid item xs={6} sm={4} md={2}>
-                    <TextField name="valor_cout" label="Valor COUT" type="number" value={item.valor_cout} onChange={(e) => handleItemChange(index, e)} fullWidth/>
-                  </Grid>
-                  <Grid item xs={6} sm={4} md={2}>
-                    <TextField name="valor_osc" label="Valor OSC" type="number" value={item.valor_osc} onChange={(e) => handleItemChange(index, e)} fullWidth/>
-                  </Grid>
-                  <Grid item xs={6} sm={4} md={2}>
-                    <TextField name="valor_venda_final" label="Venda Final" type="number" value={item.valor_venda_final} onChange={(e) => handleItemChange(index, e)} fullWidth/>
-                  </Grid>
-                  <Grid item xs={6} sm={4} md={2}>
-                    <TextField name="dolar_cotacao" label="Dólar Cotação" type="number" value={item.dolar_cotacao} onChange={(e) => handleItemChange(index, e)} fullWidth/>
-                  </Grid>
-                  <Grid item xs={12} sm={6} md={3}>
-                    <TextField name="data_retorno" label="Data de Retorno" type="date" value={item.data_retorno} onChange={(e) => handleItemChange(index, e)} fullWidth InputLabelProps={{ shrink: true }}/>
-                  </Grid>
-                  <Grid item xs={12} sm={2} md={1}>
-                    <IconButton onClick={() => removerItem(index)} color="error" disabled={itens.length === 1}><DeleteIcon /></IconButton>
-                  </Grid>
+                  
+                  {/* Campos numéricos e de data (sem alterações) */}
+                  <Grid item xs={6} sm={4} md={2}><TextField name="quantidade" label="Quantidade" type="number" value={item.quantidade} onChange={(e) => handleItemChange(index, e)} fullWidth required/></Grid>
+                  <Grid item xs={6} sm={4} md={2}><TextField name="valor_unitario" label="Valor Unitário" type="number" value={item.valor_unitario} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
+                  <Grid item xs={6} sm={4} md={2}><TextField name="valor_cout" label="Valor QUOTE" type="number" value={item.valor_cout} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
+                  <Grid item xs={6} sm={4} md={2}><TextField name="valor_osc" label="Valor OSC" type="number" value={item.valor_osc} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
+                  <Grid item xs={6} sm={4} md={2}><TextField name="valor_venda_final" label="Venda Final" type="number" value={item.valor_venda_final} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
+                  <Grid item xs={6} sm={4} md={2}><TextField name="dolar_cotacao" label="Dólar Cotação" type="number" value={item.dolar_cotacao} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
+                  <Grid item xs={12} sm={5}><TextField name="data_cotacao" label="Data de Início da Cotação" type="date" value={item.data_cotacao} onChange={(e) => handleItemChange(index, e)} fullWidth InputLabelProps={{ shrink: true }}/></Grid>
+                  <Grid item xs={12} sm={5}><TextField name="data_retorno" label="Data de Retorno" type="date" value={item.data_retorno} onChange={(e) => handleItemChange(index, e)} fullWidth InputLabelProps={{ shrink: true }}/></Grid>
+                  <Grid item xs={12} sm={2} container justifyContent="flex-end"><IconButton onClick={() => removerItem(index)} color="error" disabled={itens.length === 1}><DeleteIcon /></IconButton></Grid>
+
                 </Grid>
               </Paper>
             ))}
 
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
-              <Button startIcon={<AddCircleOutlineIcon />} onClick={adicionarItem} variant="outlined" disabled={formLoading} >
-                Adicionar Item
-              </Button>
+              <Button startIcon={<AddCircleOutlineIcon />} onClick={adicionarItem} variant="outlined" disabled={formLoading} >Adicionar Item</Button>
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <Button variant="outlined" color="secondary" onClick={() => navigate('/cotacoes')} disabled={formLoading}>
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit" variant="contained" color="primary" size="large"
-                  disabled={formLoading}
-                  startIcon={formLoading ? <CircularProgress size={20} color="inherit" /> : null}
-                >
+                <Button variant="outlined" color="secondary" onClick={() => navigate('/cotacoes')} disabled={formLoading}>Cancelar</Button>
+                <Button type="submit" variant="contained" color="primary" size="large" disabled={formLoading} startIcon={formLoading ? <CircularProgress size={20} color="inherit" /> : null}>
                   {formLoading ? 'Salvando...' : 'Salvar Cotação'}
                 </Button>
               </Box>
