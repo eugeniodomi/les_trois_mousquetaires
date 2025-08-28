@@ -3,21 +3,30 @@ const pool = require('../config/database.js');
 // Função para CRIAR um novo distribuidor
 exports.create = async (req, res) => {
     try {
+        // Assumindo que seu middleware de autenticação coloca o ID do usuário em req.user.id
+        const usuarioId = req.user?.id; // Usando optional chaining para segurança
+        if (!usuarioId) {
+            return res.status(403).json({ message: "Ação não permitida. Usuário não autenticado." });
+        }
+
         if (!req.body.nome) {
             return res.status(400).json({ message: "O nome do distribuidor não pode ser vazio!" });
         }
         const { nome, cnpj, contato_nome, contato_email, telefone } = req.body;
         const status = req.body.status || 'ativo';
+        
         const query = `
-            INSERT INTO distribuidores (nome, cnpj, contato_nome, contato_email, telefone, status)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO distribuidores 
+                (nome, cnpj, contato_nome, contato_email, telefone, status, usuario_criador_id, usuario_atualizacao_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
             RETURNING *;
         `;
-        const values = [nome, cnpj, contato_nome, contato_email, telefone, status];
+        const values = [nome, cnpj, contato_nome, contato_email, telefone, status, usuarioId];
         const { rows } = await pool.query(query, values);
-        res.status(201).json(rows[0]); // SUGESTÃO: Usando res.json() e extraindo o objeto de 'rows'
+        res.status(201).json(rows[0]);
 
     } catch (error) {
+        console.error("ERRO DETALHADO AO CRIAR:", error);
         res.status(500).json({ message: error.message || "Ocorreu um erro ao criar o distribuidor." });
     }
 };
@@ -25,11 +34,11 @@ exports.create = async (req, res) => {
 // Função para LISTAR TODOS os distribuidores ATIVOS
 exports.findAll = async (req, res) => {
     try {
-        // SUGESTÃO: Adicionado filtro por status = 'ativo' para consistência
         const query = "SELECT * FROM distribuidores WHERE status = 'ativo' ORDER BY nome ASC";
         const { rows } = await pool.query(query);
-        res.json(rows); // SUGESTÃO: Usando res.json()
+        res.json(rows);
     } catch (error) {
+        console.error("ERRO AO BUSCAR TODOS:", error);
         res.status(500).json({ message: error.message || "Ocorreu um erro ao buscar os distribuidores." });
     }
 };
@@ -42,11 +51,12 @@ exports.findOne = async (req, res) => {
         const { rows } = await pool.query(query, [id]);
 
         if (rows.length > 0) {
-            res.json(rows[0]); // SUGESTÃO: Usando res.json() e enviando o objeto diretamente
+            res.json(rows[0]);
         } else {
             res.status(404).json({ message: `Não foi possível encontrar o distribuidor com id=${id}.` });
         }
     } catch (error) {
+        console.error("ERRO AO BUSCAR UM:", error);
         res.status(500).json({ message: "Erro ao buscar o distribuidor com id=" + req.params.id });
     }
 };
@@ -54,12 +64,23 @@ exports.findOne = async (req, res) => {
 // Função para ATUALIZAR um distribuidor
 exports.update = async (req, res) => {
     try {
+        const usuarioId = req.user?.id;
+        if (!usuarioId) {
+            return res.status(403).json({ message: "Ação não permitida. Usuário não autenticado." });
+        }
+
         const id = req.params.id;
         const campos = req.body;
+
+        delete campos.id;
+        delete campos.data_cadastro;
+        delete campos.data_atualizacao;
+        delete campos.usuario_criador_id;
+
         const chaves = Object.keys(campos);
 
         if (chaves.length === 0) {
-            return res.status(400).json({ message: "O corpo da requisição não pode ser vazio para atualização." });
+            return res.status(400).json({ message: "O corpo da requisição não pode ser vazio." });
         }
 
         const setClauses = [];
@@ -73,9 +94,12 @@ exports.update = async (req, res) => {
         }
 
         setClauses.push(`data_atualizacao = NOW()`);
+        setClauses.push(`usuario_atualizacao_id = $${paramIndex}`);
+        values.push(usuarioId);
+        paramIndex++;
+
         values.push(id);
 
-        // SUGESTÃO: Adicionado RETURNING * para retornar o objeto atualizado
         const query = `
             UPDATE distribuidores 
             SET ${setClauses.join(', ')} 
@@ -86,7 +110,6 @@ exports.update = async (req, res) => {
         const { rows } = await pool.query(query, values);
         
         if (rows.length > 0) {
-            // SUGESTÃO: Retorna o objeto atualizado para o frontend
             res.json({ message: "Distribuidor atualizado com sucesso.", distributor: rows[0] });
         } else {
             res.status(404).json({ message: `Não foi possível encontrar e atualizar o distribuidor com id=${id}.` });
@@ -114,6 +137,7 @@ exports.delete = async (req, res) => {
             res.status(404).json({ message: `Não foi possível desativar o distribuidor com id=${id}. Talvez não tenha sido encontrado.` });
         }
     } catch (error) {
+        console.error("ERRO AO DELETAR:", error);
         res.status(500).json({ message: "Não foi possível desativar o distribuidor com id=" + req.params.id });
     }
 };

@@ -2,7 +2,7 @@
 
 import { Routes, Route } from 'react-router-dom';
 
-// 1. IMPORTS NECESSÁRIOS
+// IMPORTS NECESSÁRIOS
 import Layout from '../components/layout/Layout';
 import ProtectedRoute from './ProtectedRoute';
 import LoginPage from '../pages/LoginPage';
@@ -19,9 +19,10 @@ import SearchPage from '../pages/SearchPage';
 import CadastroCotacaoPage from '../pages/CadastroCotacaoPage';
 import EditarCotacaoPage from '../pages/EditarCotacaoPage';
 import CadastroDistribuidoresPage from '../pages/CadastroDistribuidoresPage';
-
-// 👇 1. IMPORTE A NOVA PÁGINA DE DETALHES
 import DistribuidorDetailPage from '../pages/DistribuidorDetailPage';
+
+// 👇 1. IMPORTE A NOVA PÁGINA DE EDIÇÃO
+import EditarDistribuidorPage from '../pages/EditarDistribuidorPage';
 
 
 export default function AppRoutes() {
@@ -41,12 +42,10 @@ export default function AppRoutes() {
           <Route path="distribuidores">
             <Route index element={<DistribuidoresPage />} />
             <Route path="novo" element={<CadastroDistribuidoresPage />} />
-            
-            {/* 👇 2. ADICIONE A NOVA ROTA DE DETALHES AQUI */}
             <Route path=":id" element={<DistribuidorDetailPage />} />
             
-            {/* Futuramente, você pode criar uma página de edição e descomentar a rota abaixo */}
-            {/* <Route path=":id/editar" element={<EditarDistribuidorPage />} /> */}
+            {/* 👇 2. ADICIONE A NOVA ROTA DE EDIÇÃO AQUI */}
+            <Route path=":id/editar" element={<EditarDistribuidorPage />} />
           </Route>
           
           {/* --- ROTAS DE COTAÇÕES --- */}
