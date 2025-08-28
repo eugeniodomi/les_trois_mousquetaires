@@ -1,32 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { ptBR } from '@mui/x-data-grid/locales';
-
-// ALTERAÇÃO 1: Importar o novo serviço de API.
 import { getDistributors } from '../services/distributorService';
-
-// ALTERAÇÃO 2: A função de simulação foi removida.
 
 export default function DistribuidoresPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadDistributors = async () => {
       setLoading(true);
       try {
-        // ALTERAÇÃO 3: Chamar a função da API real.
         const distributorsFromApi = await getDistributors();
-        
-        // ALTERAÇÃO 4: Mapear os dados da API para o formato que a DataGrid espera.
         const formattedDistributors = distributorsFromApi.map(d => ({
           id: d.id,
           cnpj: d.cnpj,
-          name: d.nome, // Backend 'nome' -> Frontend 'name'
-          contact: d.contato_nome, // Backend 'contato_nome' -> Frontend 'contact'
+          name: d.nome,
+          contact: d.contato_nome,
         }));
-        
         setRows(formattedDistributors);
       } catch (error) {
         console.error("Erro ao carregar distribuidores:", error);
@@ -34,23 +28,20 @@ export default function DistribuidoresPage() {
         setLoading(false);
       }
     };
-
     loadDistributors();
   }, []);
 
-  // ALTERAÇÃO 5: Colunas ajustadas para refletir os dados reais do banco.
-  // A coluna 'city' foi removida.
   const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'cnpj', headerName: 'CNPJ', width: 200 },
-    {
-      field: 'name',
-      headerName: 'Nome do Distribuidor',
-      width: 250,
-      flex: 1,
-    },
+    { field: 'name', headerName: 'Nome do Distribuidor', width: 250, flex: 1 },
     { field: 'contact', headerName: 'Contato Principal', width: 200 },
   ];
+
+  const handleRowClick = (params) => {
+    console.log("Linha clicada, a navegar para o ID:", params.id);
+    navigate(`/distribuidores/${params.id}`);
+  };
 
   return (
     <Box>
@@ -64,14 +55,11 @@ export default function DistribuidoresPage() {
           loading={loading}
           pageSizeOptions={[10, 20, 50, 100]}
           initialState={{
-            pagination: {
-              paginationModel: { pageSize: 10 },
-            },
-            sorting: {
-              sortModel: [{ field: 'name', sort: 'asc' }],
-            },
+            pagination: { paginationModel: { pageSize: 10 } },
+            sorting: { sortModel: [{ field: 'name', sort: 'asc' }] },
           }}
-          disableRowSelectionOnClick
+          onRowClick={handleRowClick}
+          // A propriedade sx que alterava o cursor foi removida daqui
           localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
         />
       </Paper>
