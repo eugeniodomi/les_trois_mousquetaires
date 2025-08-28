@@ -70,3 +70,31 @@ export const createQuotation = async (quotationData) => {
     throw error;
   }
 };
+
+/**
+ * Atualiza os dados de uma cotação existente.
+ * @param {string|number} id - O ID da cotação a ser atualizada.
+ * @param {object} quotationData - O objeto com os dados a serem atualizados.
+ * @returns {Promise<object>} Uma promessa que resolve para a resposta da API.
+ */
+export const updateQuotation = async (id, quotationData) => {
+  try {
+    const response = await fetch(`${API_URL}/cotacoes/${id}`, { // A URL correta é /api/cotacoes/:id
+      method: 'PUT', // O método HTTP para atualização é PUT
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(quotationData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Não foi possível atualizar a cotação.');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error(`Falha ao atualizar cotação ${id}:`, error);
+    throw error;
+  }
+};

@@ -1,12 +1,10 @@
-// src/pages/CotacaoDetailPage.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, CircularProgress, Button, Grid, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import EditIcon from '@mui/icons-material/Edit'; // <<< 1. IMPORTE O ÍCONE DE EDIÇÃO
+import { getQuotationById } from '../services/quotationService';
 
-// A função de serviço permanece a mesma, buscando da API correta.
-import { getQuotationById } from '../services/quotationService'; 
 
 // Função auxiliar para formatar moeda
 const formatCurrency = (value) => {
@@ -14,14 +12,13 @@ const formatCurrency = (value) => {
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
-// Função auxiliar para formatar datas (ex: 25/12/2024)
+// Função auxiliar para formatar datas (ex: 25/08/2025)
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
-  // Adiciona 'T00:00:00' para garantir que a data seja interpretada em fuso horário local
   return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR');
 };
 
-// Função auxiliar para formatar data e hora (ex: 25/12/2024 14:30:00)
+// Função auxiliar para formatar data e hora (ex: 25/08/2025 14:30:00)
 const formatDateTime = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString('pt-BR');
@@ -46,8 +43,6 @@ export default function CotacaoDetailPage() {
       setError('');
       try {
         const data = await getQuotationById(id);
-        // A API deve retornar a lista de itens no campo 'itens_cotacao'
-        // Para manter compatibilidade com o código original, renomeamos para 'itens'
         if (data.itens_cotacao) {
           data.itens = data.itens_cotacao;
         }
@@ -61,10 +56,8 @@ export default function CotacaoDetailPage() {
     loadQuoteDetails();
   }, [id]);
 
-  // --- Funções de cálculo para os totais (CORRIGIDO) ---
   const calculateTotal = (field) => {
     if (!quote || !quote.itens) return 0;
-    // A lógica correta é somar (quantidade * valor) para cada item
     return quote.itens.reduce((sum, item) => {
       const itemTotal = (Number(item.quantidade) || 0) * (Number(item[field]) || 0);
       return sum + itemTotal;
@@ -97,14 +90,26 @@ export default function CotacaoDetailPage() {
 
   return (
     <Box sx={{ p: 2 }}>
-      <Button
-        variant="outlined"
-        startIcon={<ArrowBackIcon />}
-        onClick={() => navigate('/cotacoes')}
-        sx={{ mb: 2 }}
-      >
-        Voltar para a Lista
-      </Button>
+      {/* <<< 2. SEÇÃO DE BOTÕES PARA MELHOR ORGANIZAÇÃO */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Button
+          variant="outlined"
+          startIcon={<ArrowBackIcon />}
+          onClick={() => navigate('/cotacoes')}
+        >
+          Voltar para a Lista
+        </Button>
+        
+        {/* <<< 3. BOTÃO DE EDITAR IMPLEMENTADO */}
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<EditIcon />}
+          onClick={() => navigate(`/cotacoes/${id}/editar`)}
+        >
+          Editar
+        </Button>
+      </Box>
 
       <Paper sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
@@ -116,15 +121,12 @@ export default function CotacaoDetailPage() {
         <Divider sx={{ my: 2 }} />
         
         <Grid container spacing={3}>
-          {/* Coluna 1: Informações Gerais (CORRIGIDO) */}
           <Grid item xs={12} md={4}>
             <Typography variant="h6">Informações Gerais</Typography>
             <Typography><strong>Status:</strong> {quote.status || 'N/A'}</Typography>
-            {/* Assumindo que a API retorna o campo 'usuario_criador_nome' */}
             <Typography><strong>Criado por:</strong> {quote.usuario_criador_nome || `ID: ${quote.usuario_criador_id}`}</Typography>
           </Grid>
           
-          {/* Coluna 2: Detalhes Financeiros (CORRIGIDO) */}
           <Grid item xs={12} md={4}>
             <Typography variant="h6">Totais Financeiros</Typography>
             <Typography><strong>Total Quote:</strong> {formatCurrency(calculateTotal('valor_cout'))}</Typography>
@@ -132,12 +134,10 @@ export default function CotacaoDetailPage() {
             <Typography><strong>Total Venda Final:</strong> {formatCurrency(calculateTotal('valor_venda_final'))}</Typography>
           </Grid>
 
-          {/* Coluna 3: Datas (CORRIGIDO) */}
           <Grid item xs={12} md={4}>
             <Typography variant="h6">Datas Relevantes</Typography>
             <Typography><strong>Data de Criação:</strong> {formatDateTime(quote.data_criacao)}</Typography>
             <Typography><strong>Data de Fechamento:</strong> {formatDateTime(quote.data_fechamento)}</Typography>
-            {/* LINHAS ADICIONADAS CONFORME SOLICITADO */}
             <Typography><strong>Data da Cotação (Item):</strong> {formatDate(quote.itens?.[0]?.data_cotacao)}</Typography>
             <Typography><strong>Data de Retorno (Item):</strong> {formatDate(quote.itens?.[0]?.data_retorno)}</Typography>
           </Grid>
@@ -151,7 +151,6 @@ export default function CotacaoDetailPage() {
         <TableContainer component={Paper} variant="outlined">
           <Table>
             <TableHead>
-              {/* Cabeçalho da Tabela (CORRIGIDO) */}
               <TableRow>
                 <TableCell>Produto (SKU)</TableCell>
                 <TableCell>Distribuidor</TableCell>
@@ -162,12 +161,10 @@ export default function CotacaoDetailPage() {
                 <TableCell align="right">Venda Final</TableCell>
                 <TableCell align="right">Subtotal</TableCell>
                 <TableCell>Data Cotação</TableCell>
-                {/* COLUNA ADICIONADA */}
                 <TableCell>Data Retorno</TableCell> 
               </TableRow>
             </TableHead>
             <TableBody>
-              {/* Corpo da Tabela (CORRIGIDO) */}
               {quote.itens && quote.itens.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{`${item.produto_nome || 'N/A'} (${item.produto_sku || 'N/A'})`}</TableCell>
@@ -179,7 +176,6 @@ export default function CotacaoDetailPage() {
                   <TableCell align="right">{formatCurrency(item.valor_venda_final)}</TableCell>
                   <TableCell align="right">{formatCurrency(item.quantidade * (item.valor_venda_final || item.valor_unitario || 0))}</TableCell>
                   <TableCell>{formatDate(item.data_cotacao)}</TableCell>
-                  {/* DADO DA COLUNA ADICIONADO */}
                   <TableCell>{formatDate(item.data_retorno)}</TableCell> 
                 </TableRow>
               ))}

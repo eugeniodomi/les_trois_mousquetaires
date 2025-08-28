@@ -18,6 +18,11 @@ import DashboardsPage from '../pages/DashboardsPage';
 import SearchPage from '../pages/SearchPage';
 import CadastroCotacaoPage from '../pages/CadastroCotacaoPage';
 
+import EditarCotacaoPage from '../pages/EditarCotacaoPage'; // 👈 1. IMPORTE A PÁGINA DE EDIÇÃO
+
+
+
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -42,6 +47,10 @@ export default function AppRoutes() {
             
             {/* Rota para ver o detalhe de uma cotação específica */}
             <Route path=":id" element={<CotacaoDetailPage />} />
+
+            <Route path=":id/editar" element={<EditarCotacaoPage />} />
+
+
           </Route>
           {/* --- FIM DA ATUALIZAÇÃO --- */}
 
