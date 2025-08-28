@@ -17,7 +17,7 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import DescriptionIcon from '@mui/icons-material/Description';
-import EditNoteIcon from '@mui/icons-material/EditNote'; // Importação do novo ícone
+import EditNoteIcon from '@mui/icons-material/EditNote';
 
 const drawerWidth = 240;
 
@@ -158,6 +158,15 @@ export default function Layout() {
                 </ListItemIcon>
                 <ListItemText primary="Distribuidores" />
               </ListItemButton>
+
+              {/* ✅ NOVO ITEM DE MENU ADICIONADO AQUI */}
+              <ListItemButton component={Link} to="/distribuidores/novo" sx={{ pl: 4 }}>
+                <ListItemIcon>
+                  <PostAddIcon />
+                </ListItemIcon>
+                <ListItemText primary="Cadastrar Distribuidor" />
+              </ListItemButton>
+
             </List>
           </Collapse>
 
@@ -185,7 +194,6 @@ export default function Layout() {
                 </ListItemIcon>
                 <ListItemText primary="Nova Cotação" />
               </ListItemButton>
-              {/* NOVO ITEM DE MENU ADICIONADO AQUI */}
               <ListItemButton component={Link} to="/cotacoes/editar" sx={{ pl: 4 }}>
                 <ListItemIcon>
                   <EditNoteIcon />

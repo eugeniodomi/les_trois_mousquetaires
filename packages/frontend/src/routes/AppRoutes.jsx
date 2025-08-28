@@ -17,10 +17,8 @@ import CotacaoDetailPage from '../pages/CotacaoDetailPage';
 import DashboardsPage from '../pages/DashboardsPage';
 import SearchPage from '../pages/SearchPage';
 import CadastroCotacaoPage from '../pages/CadastroCotacaoPage';
-
-import EditarCotacaoPage from '../pages/EditarCotacaoPage'; // 👈 1. IMPORTE A PÁGINA DE EDIÇÃO
-
-
+import EditarCotacaoPage from '../pages/EditarCotacaoPage';
+import CadastroDistribuidoresPage from '../pages/CadastroDistribuidoresPage';
 
 
 export default function AppRoutes() {
@@ -35,24 +33,34 @@ export default function AppRoutes() {
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="produtos" element={<ProdutosPage />} />
-          <Route path="distribuidores" element={<DistribuidoresPage />} />
           
-          {/* --- ESTRUTURA DE ROTAS DE COTAÇÕES ATUALIZADA --- */}
+          {/* --- ROTAS DE DISTRIBUIDORES CORRIGIDAS E AGRUPADAS --- */}
+          <Route path="distribuidores">
+            {/* Rota para a lista de distribuidores -> /distribuidores */}
+            <Route index element={<DistribuidoresPage />} />
+            
+            {/* Rota para cadastrar um novo distribuidor -> /distribuidores/novo */}
+            <Route path="novo" element={<CadastroDistribuidoresPage />} />
+            
+            {/* Futuramente, você pode adicionar rotas de detalhe e edição aqui */}
+            {/* <Route path=":id" element={<DistibuidorDetailPage />} /> */}
+            {/* <Route path=":id/editar" element={<EditarDistribuidorPage />} /> */}
+          </Route>
+          
+          {/* --- ROTAS DE COTAÇÕES --- */}
           <Route path="cotacoes">
-            {/* Rota para a lista de cotações */}
+            {/* Rota para a lista de cotações -> /cotacoes */}
             <Route index element={<CotacoesPage />} />
             
-            {/* ✅ Rota para 'cadastrar' uma nova cotação, evitando conflito */}
+            {/* Rota para cadastrar uma nova cotação -> /cotacoes/cadastrar */}
             <Route path="cadastrar" element={<CadastroCotacaoPage />} />
             
-            {/* Rota para ver o detalhe de uma cotação específica */}
+            {/* Rota para ver o detalhe de uma cotação -> /cotacoes/:id */}
             <Route path=":id" element={<CotacaoDetailPage />} />
 
+            {/* Rota para editar uma cotação -> /cotacoes/:id/editar */}
             <Route path=":id/editar" element={<EditarCotacaoPage />} />
-
-
           </Route>
-          {/* --- FIM DA ATUALIZAÇÃO --- */}
 
           <Route path="dashboards" element={<DashboardsPage />} />
           <Route path="buscar" element={<SearchPage />} />
