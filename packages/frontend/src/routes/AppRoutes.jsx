@@ -20,9 +20,10 @@ import CadastroCotacaoPage from '../pages/CadastroCotacaoPage';
 import EditarCotacaoPage from '../pages/EditarCotacaoPage';
 import CadastroDistribuidoresPage from '../pages/CadastroDistribuidoresPage';
 import DistribuidorDetailPage from '../pages/DistribuidorDetailPage';
-
-// 👇 1. IMPORTE A NOVA PÁGINA DE EDIÇÃO
 import EditarDistribuidorPage from '../pages/EditarDistribuidorPage';
+
+// 👇 1. IMPORTE A NOVA PÁGINA DE CADASTRO DE PRODUTO
+import CadastroProdutosPage from '../pages/CadastroProdutosPage';
 
 
 export default function AppRoutes() {
@@ -36,15 +37,19 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
-          <Route path="produtos" element={<ProdutosPage />} />
+          
+          {/* --- ROTAS DE PRODUTOS --- */}
+          <Route path="produtos">
+            <Route index element={<ProdutosPage />} />
+            {/* 👇 2. ADICIONE A NOVA ROTA AQUI */}
+            <Route path="novo" element={<CadastroProdutosPage />} />
+          </Route>
           
           {/* --- ROTAS DE DISTRIBUIDORES --- */}
           <Route path="distribuidores">
             <Route index element={<DistribuidoresPage />} />
             <Route path="novo" element={<CadastroDistribuidoresPage />} />
             <Route path=":id" element={<DistribuidorDetailPage />} />
-            
-            {/* 👇 2. ADICIONE A NOVA ROTA DE EDIÇÃO AQUI */}
             <Route path=":id/editar" element={<EditarDistribuidorPage />} />
           </Route>
           

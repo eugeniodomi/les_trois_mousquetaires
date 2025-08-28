@@ -1,9 +1,8 @@
 const pool = require('../config/database');
 
-// Lógica para buscar todos os produtos ATIVOS
+// Lógica para buscar todos os produtos ATIVOS (Nenhuma alteração necessária)
 exports.findAll = async (req, res) => {
   try {
-    // EDITADO: A query agora busca apenas produtos com status 'ativo' e ordena por nome.
     const query = "SELECT * FROM produtos WHERE status = 'ativo' ORDER BY nome ASC";
     const { rows } = await pool.query(query);
     res.json(rows);
@@ -13,29 +12,30 @@ exports.findAll = async (req, res) => {
   }
 };
 
-// Lógica para criar um novo produto com todos os novos campos
+// --- CÓDIGO CORRIGIDO ---
+// Lógica para criar um novo produto, alinhada com o formulário e o banco de dados
 exports.create = async (req, res) => {
   try {
-    // EDITADO: Captura todos os novos campos do corpo da requisição.
-    const { nome, descricao, unidade_medida, sku, categoria_id } = req.body;
-    const status = req.body.status || 'ativo'; // Garante um status padrão.
+    // 1. Captura apenas os campos que o formulário realmente envia
+    const { nome, descricao, sku, categoria_id } = req.body;
+    const status = 'ativo'; // Define um status padrão no backend
 
-    // Validação de campos essenciais
-    if (!nome || !unidade_medida) {
-      return res.status(400).send({ message: "Os campos 'nome' e 'unidade_medida' são obrigatórios." });
+    // 2. Validação atualizada: verifica apenas o 'nome'
+    if (!nome || !nome.trim()) {
+      return res.status(400).send({ message: "O campo 'nome' é obrigatório." });
     }
 
-    // EDITADO: A query de inserção agora inclui todas as colunas novas.
-    // As colunas de data são preenchidas com NOW() diretamente no banco.
+    // 3. Query de inserção corrigida: sem 'unidade_medida' e sem colunas de data
     const query = `
-      INSERT INTO produtos (nome, descricao, unidade_medida, sku, status, categoria_id, data_criacao, data_atualizacao)
-      VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+      INSERT INTO produtos (nome, descricao, sku, categoria_id, status)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `;
-    const values = [nome, descricao, unidade_medida, sku, status, categoria_id];
+    // 4. Array de valores correspondente à nova query
+    const values = [nome, descricao, sku, categoria_id, status];
 
     const { rows } = await pool.query(query, values);
-    res.status(201).json(rows[0]); // Usa o status 201 (Created) que é o correto para criação.
+    res.status(201).json(rows[0]);
 
   } catch (err) {
     console.error(err.message);
@@ -43,7 +43,8 @@ exports.create = async (req, res) => {
   }
 };
 
-// Lógica para atualizar um produto (LÓGICA MELHORADA - DINÂMICA)
+// --- CÓDIGO CORRIGIDO ---
+// Lógica para atualizar um produto
 exports.update = async (req, res) => {
   try {
     const { id } = req.params;
@@ -64,8 +65,7 @@ exports.update = async (req, res) => {
       paramIndex++;
     }
 
-    // NOVO: Adiciona a atualização automática do campo 'data_atualizacao' para auditoria.
-    setClauses.push(`data_atualizacao = NOW()`);
+    // A linha que atualizava 'data_atualizacao' foi REMOVIDA
     values.push(id);
 
     const query = `
@@ -88,22 +88,22 @@ exports.update = async (req, res) => {
   }
 };
 
-// Lógica para "deletar" um produto (LÓGICA ALTERADA - SOFT DELETE)
+// --- CÓDIGO CORRIGIDO ---
+// Lógica para "deletar" um produto (soft delete)
 exports.delete = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // EDITADO: Em vez de DELETAR, atualizamos o status para 'inativo'.
-    // Isso preserva o histórico de cotações associado ao produto.
+    // Query corrigida: atualiza apenas o status, sem 'data_atualizacao'
     const query = `
       UPDATE produtos
-      SET status = 'inativo', data_atualizacao = NOW()
+      SET status = 'inativo'
       WHERE id = $1
     `;
     const result = await pool.query(query, [id]);
 
     if (result.rowCount === 1) {
-      res.json({ message: 'Produto desativado com sucesso!' }); // Mensagem mais clara
+      res.json({ message: 'Produto desativado com sucesso!' });
     } else {
       res.status(404).send({ message: `Produto com id=${id} não foi encontrado.` });
     }
@@ -113,7 +113,7 @@ exports.delete = async (req, res) => {
   }
 };
 
-// Lógica para buscar produtos por nome ou SKU (FUNÇÃO MELHORADA)
+// Lógica para buscar produtos por nome ou SKU (Nenhuma alteração necessária)
 exports.search = async (req, res) => {
   try {
     const { q } = req.query;
@@ -122,7 +122,6 @@ exports.search = async (req, res) => {
       return res.json([]);
     }
 
-    // EDITADO: A busca agora procura no NOME e no SKU, e apenas entre produtos ATIVOS.
     const query = `
       SELECT * FROM produtos
       WHERE (nome ILIKE $1 OR sku ILIKE $1) AND status = 'ativo'

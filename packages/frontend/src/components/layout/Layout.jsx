@@ -152,14 +152,21 @@ export default function Layout() {
                 </ListItemIcon>
                 <ListItemText primary="Produtos" />
               </ListItemButton>
+
+              {/* ✅ NOVO ITEM DE MENU ADICIONADO AQUI */}
+              <ListItemButton component={Link} to="/produtos/novo" sx={{ pl: 4 }}>
+                <ListItemIcon>
+                  <PostAddIcon />
+                </ListItemIcon>
+                <ListItemText primary="Cadastrar Produto" />
+              </ListItemButton>
+              
               <ListItemButton component={Link} to="/distribuidores" sx={{ pl: 4 }}>
                 <ListItemIcon>
                   <GroupIcon />
                 </ListItemIcon>
                 <ListItemText primary="Distribuidores" />
               </ListItemButton>
-
-              {/* ✅ NOVO ITEM DE MENU ADICIONADO AQUI */}
               <ListItemButton component={Link} to="/distribuidores/novo" sx={{ pl: 4 }}>
                 <ListItemIcon>
                   <PostAddIcon />
