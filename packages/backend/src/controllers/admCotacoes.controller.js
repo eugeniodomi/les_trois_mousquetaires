@@ -97,9 +97,6 @@ exports.findAll = async (req, res) => {
 /**
  * @description Busca uma cotação mestre pelo ID e todos os seus itens associados.
  */
-/**
- * @description Busca uma cotação mestre pelo ID e todos os seus itens associados.
- */
 exports.findOne = async (req, res) => {
     try {
         const { id } = req.params;
@@ -109,24 +106,28 @@ exports.findOne = async (req, res) => {
         }
 
         // --- QUERY CORRIGIDA ---
+        // A alteração principal é adicionar 'dc.produto_id' e 'dc.distribuidor_id' na subquery.
         const query = `
             SELECT
                 c.*,
-                u.nome as usuario_criador_nome, -- ADICIONADO: Busca o nome do usuário criador
+                u.nome as usuario_criador_nome,
                 COALESCE(
                     (
                         SELECT json_agg(items_data)
                         FROM (
                             SELECT
                                 dc.id, 
+                                dc.produto_id,      -- <<< ✅ ID DO PRODUTO ADICIONADO
+                                dc.distribuidor_id, -- <<< ✅ ID DO DISTRIBUIDOR ADICIONADO
                                 dc.quantidade, 
                                 dc.valor_unitario, 
                                 dc.valor_venda_final, 
                                 dc.data_retorno, 
                                 dc.data_cotacao, 
                                 dc.data_registro,
-                                dc.valor_cout, -- <<< GARANTE QUE ESTE CAMPO SEJA BUSCADO
-                                dc.valor_osc,   -- <<< GARANTE QUE ESTE CAMPO SEJA BUSCADO
+                                dc.valor_cout,
+                                dc.valor_osc,
+                                dc.dolar_cotacao, -- Adicionando o campo que faltava
                                 p.nome as produto_nome, 
                                 p.sku as produto_sku,
                                 d.nome as distribuidor_nome
@@ -138,7 +139,7 @@ exports.findOne = async (req, res) => {
                     ), '[]'::json
                 ) as itens_cotacao
             FROM cotacoes c
-            LEFT JOIN usuarios u ON c.usuario_criador_id = u.id -- ADICIONADO: Junta com a tabela de usuários
+            LEFT JOIN usuarios u ON c.usuario_criador_id = u.id
             WHERE c.id = $1;
         `;
 

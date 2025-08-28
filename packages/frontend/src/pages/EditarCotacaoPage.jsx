@@ -191,9 +191,11 @@ function EditarCotacaoPage() {
 
               <Divider sx={{ my: 2 }}><Typography variant="h6">Itens da Cotação</Typography></Divider>
               
-              {itens.map((item, index) => (
+             {itens.map((item, index) => (
                 <Paper key={item.id || item.tempId} variant="outlined" sx={{ p: 2, mb: 2 }}>
                   <Grid container spacing={2} alignItems="center">
+                    
+                    {/* --- CAMPO PRODUTO --- */}
                     <Grid item xs={12}>
                       <Autocomplete
                         options={produtos}
@@ -202,8 +204,11 @@ function EditarCotacaoPage() {
                         onChange={(event, newValue) => handleAutocompleteChange(index, 'produto_id', newValue)}
                         isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
                         renderInput={(params) => <TextField {...params} label="Produto" required fullWidth />}
+                        sx={{ minWidth: 300 }} // <<< Estilo copiado da página de cadastro
                       />
                     </Grid>
+                    
+                    {/* --- CAMPO DISTRIBUIDOR --- */}
                     <Grid item xs={12}>
                       <Autocomplete
                         options={distribuidores}
@@ -212,8 +217,11 @@ function EditarCotacaoPage() {
                         onChange={(event, newValue) => handleAutocompleteChange(index, 'distribuidor_id', newValue)}
                         isOptionEqualToValue={(option, value) => String(option.id) === String(value.id)}
                         renderInput={(params) => <TextField {...params} label="Distribuidor" required fullWidth />}
+                        sx={{ minWidth: 300 }} // <<< Estilo copiado da página de cadastro
                       />
                     </Grid>
+
+                    {/* --- Demais campos ajustados para consistência com a página de cadastro --- */}
                     <Grid item xs={6} sm={4} md={2}><TextField name="quantidade" label="Quantidade" type="number" value={item.quantidade || ''} onChange={(e) => handleItemChange(index, e)} fullWidth required /></Grid>
                     <Grid item xs={6} sm={4} md={2}><TextField name="valor_unitario" label="Valor Unitário" type="number" value={item.valor_unitario || ''} onChange={(e) => handleItemChange(index, e)} fullWidth /></Grid>
                     <Grid item xs={6} sm={4} md={2}><TextField name="valor_cout" label="Valor QUOTE" type="number" value={item.valor_cout || ''} onChange={(e) => handleItemChange(index, e)} fullWidth /></Grid>
@@ -223,9 +231,10 @@ function EditarCotacaoPage() {
                     <Grid item xs={12} sm={5}><TextField name="data_cotacao" label="Data de Início da Cotação" type="date" value={item.data_cotacao || ''} onChange={(e) => handleItemChange(index, e)} fullWidth InputLabelProps={{ shrink: true }} /></Grid>
                     <Grid item xs={12} sm={5}><TextField name="data_retorno" label="Data de Retorno" type="date" value={item.data_retorno || ''} onChange={(e) => handleItemChange(index, e)} fullWidth InputLabelProps={{ shrink: true }} /></Grid>
                     <Grid item xs={12} sm={2} container justifyContent="flex-end"><IconButton onClick={() => removerItem(index)} color="error"><DeleteIcon /></IconButton></Grid>
+
                   </Grid>
                 </Paper>
-              ))}
+              ))} 
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
                 <Button startIcon={<AddCircleOutlineIcon />} onClick={adicionarItem} variant="outlined" disabled={formLoading}>Adicionar Item</Button>
