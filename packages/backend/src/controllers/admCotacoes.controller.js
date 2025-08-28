@@ -158,54 +158,86 @@ exports.findOne = async (req, res) => {
 /**
  * @description Atualiza uma cotação (ex: mudar a descrição ou o status).
  */
+
+/**
+ * @description Atualiza uma cotação mestre e todos os seus itens associados
+ * dentro de uma única transação.
+ */
 exports.update = async (req, res) => {
+    const { id } = req.params;
+    // Separa os dados da cotação principal dos itens
+    const { descricao, status, usuario_criador_id, itens_cotacao } = req.body;
+
+    // Validações básicas
+    if (!descricao || !status) {
+        return res.status(400).json({ message: "Descrição e status são obrigatórios." });
+    }
+    if (!itens_cotacao || !Array.isArray(itens_cotacao)) {
+        return res.status(400).json({ message: "A lista de itens da cotação é obrigatória." });
+    }
+
+    const client = await pool.connect(); // Pega uma conexão do pool para a transação
+
     try {
-        const { id } = req.params;
-        const campos = req.body;
-        const chaves = Object.keys(campos);
+        await client.query('BEGIN'); // 1. Inicia a transação
 
-        if (chaves.length === 0) {
-            return res.status(400).json({ message: "O corpo da requisição não pode ser vazio." });
-        }
-
-        const setClauses = [];
-        const values = [];
-        let paramIndex = 1;
-
-        for (const chave of chaves) {
-            // Evita que o cliente possa atualizar campos sensíveis
-            if (chave !== 'id' && chave !== 'usuario_criador_id' && chave !== 'data_criacao') {
-                setClauses.push(`"${chave}" = $${paramIndex}`);
-                values.push(campos[chave]);
-                paramIndex++;
-            }
-        }
-
-        if (campos.status && campos.status.toLowerCase() === 'fechada') {
-            setClauses.push(`data_fechamento = NOW()`);
-        }
-
-        values.push(id);
-
-        const query = `
+        // 2. Atualiza os dados na tabela principal 'cotacoes'
+        const updateCotacaoQuery = `
             UPDATE cotacoes 
-            SET ${setClauses.join(', ')} 
-            WHERE id = $${paramIndex}
-            RETURNING *;
+            SET descricao = $1, status = $2 
+            WHERE id = $3;
         `;
-        
-        const { rows } = await pool.query(query, values);
-        
-        if (rows.length > 0) {
-            res.json({ message: "Cotação atualizada com sucesso.", cotacao: rows[0] });
-        } else {
-            res.status(404).json({ message: `Não foi possível encontrar e atualizar a cotação com id=${id}.` });
-        }
+        await client.query(updateCotacaoQuery, [descricao, status, id]);
+
+        // 3. Deleta todos os itens antigos para evitar duplicatas ou itens órfãos
+        const deleteItensQuery = 'DELETE FROM dados_cotacoes WHERE cotacao_id = $1;';
+        await client.query(deleteItensQuery, [id]);
+
+        // 4. Insere os novos itens que vieram do frontend
+        // Prepara uma promise para cada item a ser inserido
+        const itemInsertPromises = itens_cotacao.map(item => {
+            const insertItemQuery = `
+                INSERT INTO dados_cotacoes (
+                    cotacao_id, produto_id, distribuidor_id, quantidade, valor_unitario,
+                    valor_cout, valor_osc, valor_venda_final, dolar_cotacao,
+                    data_cotacao, data_retorno, data_registro, data_atualizacao
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW());
+            `;
+            const itemValues = [
+                id,
+                item.produto_id,
+                item.distribuidor_id,
+                item.quantidade,
+                item.valor_unitario || null,
+                item.valor_cout || null,
+                item.valor_osc || null,
+                item.valor_venda_final || null,
+                item.dolar_cotacao || null,
+                item.data_cotacao || null,
+                item.data_retorno || null
+            ];
+            return client.query(insertItemQuery, itemValues);
+        });
+
+        // Executa todas as promises de inserção
+        await Promise.all(itemInsertPromises);
+
+        await client.query('COMMIT'); // 5. Se tudo deu certo, confirma as alterações
+
+        res.status(200).json({ message: "Cotação atualizada com sucesso!" });
+
     } catch (error) {
-        console.error("ERRO AO ATUALIZAR COTAÇÃO:", error);
-        res.status(500).json({ message: "Erro ao atualizar a cotação com id=" + req.params.id });
+        await client.query('ROLLBACK'); // 6. Se algo deu errado, desfaz tudo
+        console.error("ERRO AO ATUALIZAR COTAÇÃO (BACKEND):", error);
+        res.status(500).json({ message: "Erro interno no servidor ao atualizar a cotação." });
+    
+    } finally {
+        client.release(); // Libera a conexão de volta para o pool
     }
 };
+
+
 
 /**
  * @description Deleta (desativa) uma cotação, mudando seu status para 'Cancelada'.
