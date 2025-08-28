@@ -16,6 +16,7 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import PostAddIcon from '@mui/icons-material/PostAdd';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 const drawerWidth = 240;
 
@@ -63,10 +64,10 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
   }),
 );
 
-
 export default function Layout() {
   const [open, setOpen] = useState(true);
   const [registrosOpen, setRegistrosOpen] = useState(false);
+  const [cotacoesOpen, setCotacoesOpen] = useState(false);
   const theme = useTheme();
 
   const handleDrawerToggle = () => {
@@ -75,6 +76,10 @@ export default function Layout() {
 
   const handleRegistrosClick = () => {
     setRegistrosOpen(!registrosOpen);
+  };
+
+  const handleCotacoesClick = () => {
+    setCotacoesOpen(!cotacoesOpen);
   };
 
   return (
@@ -152,21 +157,33 @@ export default function Layout() {
                 </ListItemIcon>
                 <ListItemText primary="Distribuidores" />
               </ListItemButton>
+            </List>
+          </Collapse>
+
+          {/* ITEM DE MENU "COTAÇÕES" */}
+          <ListItemButton onClick={handleCotacoesClick}>
+            <ListItemIcon>
+              <DescriptionIcon />
+            </ListItemIcon>
+            <ListItemText primary="Cotações" />
+            {cotacoesOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+
+          {/* SUB-MENU DE COTAÇÕES */}
+          <Collapse in={cotacoesOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
               <ListItemButton component={Link} to="/cotacoes" sx={{ pl: 4 }}>
                 <ListItemIcon>
                   <RequestQuoteIcon />
                 </ListItemIcon>
-                <ListItemText primary="Cotações" />
+                <ListItemText primary="Ver Cotações" />
               </ListItemButton>
-              
-              {/* ✅ CORREÇÃO APLICADA AQUI */}
               <ListItemButton component={Link} to="/cotacoes/cadastrar" sx={{ pl: 4 }}>
                 <ListItemIcon>
                   <PostAddIcon />
                 </ListItemIcon>
                 <ListItemText primary="Nova Cotação" />
               </ListItemButton>
-              
             </List>
           </Collapse>
         </List>
