@@ -17,6 +17,7 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import DescriptionIcon from '@mui/icons-material/Description';
+import EditNoteIcon from '@mui/icons-material/EditNote'; // Importação do novo ícone
 
 const drawerWidth = 240;
 
@@ -142,7 +143,7 @@ export default function Layout() {
             {registrosOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
 
-          {/* SUB-MENU QUE APARECE E DESAPARECE */}
+          {/* SUB-MENU DE REGISTROS */}
           <Collapse in={registrosOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               <ListItemButton component={Link} to="/produtos" sx={{ pl: 4 }}>
@@ -183,6 +184,13 @@ export default function Layout() {
                   <PostAddIcon />
                 </ListItemIcon>
                 <ListItemText primary="Nova Cotação" />
+              </ListItemButton>
+              {/* NOVO ITEM DE MENU ADICIONADO AQUI */}
+              <ListItemButton component={Link} to="/cotacoes/editar" sx={{ pl: 4 }}>
+                <ListItemIcon>
+                  <EditNoteIcon />
+                </ListItemIcon>
+                <ListItemText primary="Editar Cotação" />
               </ListItemButton>
             </List>
           </Collapse>
