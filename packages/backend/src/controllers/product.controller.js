@@ -137,3 +137,26 @@ exports.search = async (req, res) => {
     res.status(500).send('Erro no servidor');
   }
 };
+
+// Lógica para buscar um produto por ID, incluindo o nome da categoria
+exports.findById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const query = `
+      SELECT p.*, c.nome AS nome_categoria
+      FROM produtos p
+      LEFT JOIN categorias c ON p.categoria_id = c.id
+      WHERE p.id = $1
+    `;
+    const { rows } = await pool.query(query, [id]);
+
+    if (rows.length > 0) {
+      res.json(rows[0]);
+    } else {
+      res.status(404).send({ message: `Produto com id=${id} não encontrado.` });
+    }
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send('Erro no servidor');
+  }
+};

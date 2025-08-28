@@ -47,3 +47,21 @@ export const createProduct = async (productData) => {
     throw error;
   }
 };
+
+/**
+ * Busca um único produto pelo seu ID.
+ * @param {string|number} id - O ID do produto.
+ * @returns {Promise<object>} O objeto do produto encontrado.
+ */
+export const getProductById = async (id) => {
+  try {
+    const response = await fetch(`${API_PRODUCTS_URL}/${id}`);
+    if (!response.ok) {
+      throw new Error('Não foi possível encontrar o produto.');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Falha ao buscar produto com ID ${id}:`, error);
+    throw error;
+  }
+};

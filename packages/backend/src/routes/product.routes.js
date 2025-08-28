@@ -2,25 +2,30 @@ const express = require('express');
 const router = express.Router();
 const productController = require('../controllers/product.controller.js');
 
+// --- ROTAS GERAIS E ESTÁTICAS (mais específicas) ---
+
 // Rota para LISTAR TODOS os produtos ativos
-// CORRIGIDO: A função chamada agora é 'findAll', que existe no seu controller.
 router.get('/', productController.findAll);
 
-// Rota para CRIAR um novo produto
-// CORRIGIDO: A função chamada agora é 'create'.
-router.post('/', productController.create);
-
 // Rota para BUSCAR produtos por nome ou SKU
-// Exemplo: GET /api/produtos/search?q=termo
-// CORRIGIDO: A função chamada agora é 'search'.
+// A rota estática '/search' DEVE vir antes da rota dinâmica '/:id' para evitar conflitos.
 router.get('/search', productController.search);
 
+// Rota para CRIAR um novo produto
+router.post('/', productController.create);
+
+
+// --- ROTAS DINÂMICAS (com parâmetro :id) ---
+// Todas as rotas que usam um ID específico devem vir depois das rotas estáticas.
+
+// Rota para BUSCAR um produto por ID
+router.get('/:id', productController.findById);
+
 // Rota para ATUALIZAR um produto pelo ID
-// CORRIGIDO: A função chamada agora é 'update'.
 router.put('/:id', productController.update);
 
 // Rota para DELETAR (desativar) um produto pelo ID
-// CORRIGIDO: A função chamada agora é 'delete'.
 router.delete('/:id', productController.delete);
+
 
 module.exports = router;

@@ -22,6 +22,10 @@ import CadastroDistribuidoresPage from '../pages/CadastroDistribuidoresPage';
 import DistribuidorDetailPage from '../pages/DistribuidorDetailPage';
 import EditarDistribuidorPage from '../pages/EditarDistribuidorPage';
 
+
+import ProdutosDetailPage from '../pages/ProdutosDetailPage';
+
+
 // 👇 1. IMPORTE A NOVA PÁGINA DE CADASTRO DE PRODUTO
 import CadastroProdutosPage from '../pages/CadastroProdutosPage';
 
@@ -60,6 +64,16 @@ export default function AppRoutes() {
             <Route path=":id" element={<CotacaoDetailPage />} />
             <Route path=":id/editar" element={<EditarCotacaoPage />} />
           </Route>
+
+
+           {/* --- ROTAS DE PRODUTOS --- */}
+          <Route path="produtos">
+            <Route index element={<ProdutosPage />} />
+            <Route path="novo" element={<CadastroProdutosPage />} />
+            {/* 👇 2. ADICIONE A NOVA ROTA DE DETALHES AQUI */}
+            <Route path=":id" element={<ProdutosDetailPage />} />
+          </Route>
+
 
           <Route path="dashboards" element={<DashboardsPage />} />
           <Route path="buscar" element={<SearchPage />} />

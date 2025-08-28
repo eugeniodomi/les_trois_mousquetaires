@@ -1,36 +1,31 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { ptBR } from '@mui/x-data-grid/locales';
-
-// ALTERAÇÃO 1: Importar o novo serviço de API.
 import { getProducts } from '../services/productService'; 
-
-// ALTERAÇÃO 2: A função de simulação foi removida.
 
 export default function ProdutosPage() {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadProducts = async () => {
       setLoading(true);
       try {
-        // ALTERAÇÃO 3: Chamar a função da API real.
         const productsFromApi = await getProducts();
         
-        // ALTERAÇÃO 4: Mapear os dados da API para o formato que a DataGrid espera.
         const formattedProducts = productsFromApi.map(p => ({
           id: p.id,
           sku: p.sku,
-          name: p.nome, // Backend 'nome' -> Frontend 'name'
-          category: p.nome_categoria || `ID: ${p.categoria_id}`, // Usa o nome da categoria se vier do backend
-          // 'stock' foi removido pois não existe no banco de dados. Veja a explicação abaixo.
+          name: p.nome,
+          // O backend agora deve retornar 'nome_categoria' se a busca for otimizada com JOIN
+          category: p.nome_categoria || `ID: ${p.categoria_id}`,
         }));
         
         setRows(formattedProducts);
       } catch (error) {
-        // Aqui você pode adicionar um estado de erro para mostrar na tela
         console.error("Erro ao carregar produtos:", error);
       } finally {
         setLoading(false);
@@ -40,7 +35,6 @@ export default function ProdutosPage() {
     loadProducts();
   }, []);
 
-  // ALTERAÇÃO 5: A coluna 'stock' foi removida.
   const columns = [
     { field: 'id', headerName: 'ID', width: 90 },
     { field: 'sku', headerName: 'SKU', width: 150 },
@@ -52,6 +46,10 @@ export default function ProdutosPage() {
     },
     { field: 'category', headerName: 'Categoria', width: 200 },
   ];
+
+  const handleRowClick = (params) => {
+    navigate(`/produtos/${params.id}`);
+  };
 
   return (
     <Box>
@@ -72,7 +70,12 @@ export default function ProdutosPage() {
               sortModel: [{ field: 'name', sort: 'asc' }],
             },
           }}
-          disableRowSelectionOnClick
+          onRowClick={handleRowClick}
+          sx={{
+            '& .MuiDataGrid-row:hover': {
+              cursor: 'pointer',
+            },
+          }}
           localeText={ptBR.components.MuiDataGrid.defaultProps.localeText}
         />
       </Paper>
