@@ -1,6 +1,4 @@
-// src/pages/EditarCotacaoPage.js
-
-import React, { useState, useEffect } from 'react'; // useRef removido pois não é usado nesta versão
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Container, Typography, Grid, TextField, Button, Box, Paper, IconButton,
@@ -111,17 +109,14 @@ function EditarCotacaoPage() {
     event.preventDefault();
     setFormLoading(true);
 
-    // ✅ CORREÇÃO: Cria um payload limpo, enviando apenas os campos que o backend pode atualizar.
-    // Removendo campos como 'data_criacao', 'usuario_criador_nome', etc., que vêm da API GET.
     const payload = {
       descricao: cotacao.descricao,
       usuario_criador_id: cotacao.usuario_criador_id,
       status: cotacao.status,
-      itens_cotacao: itens.map(({ tempId, ...item }) => item) // Limpa os IDs temporários dos itens
+      itens_cotacao: itens.map(({ tempId, ...item }) => item)
     };
 
     try {
-      // Envia o payload limpo em vez do objeto de estado completo
       await updateQuotation(id, payload);
 
       setNotification({ open: true, message: 'Cotação atualizada com sucesso!', severity: 'success' });
@@ -159,7 +154,6 @@ function EditarCotacaoPage() {
                     <TextField name="descricao" label="Descrição da Cotação" value={cotacao.descricao || ''} onChange={handleCotacaoChange} fullWidth required />
                 </Grid>
                 <Grid item xs={12} md={5}>
-                    {/* ✅ CORRIGIDO */}
                     <FormControl fullWidth required>
                         <InputLabel id="usuario-criador-label">Usuário Criador</InputLabel>
                         <Select
@@ -174,7 +168,7 @@ function EditarCotacaoPage() {
                     </FormControl>
                 </Grid>
                 <Grid item xs={12}>
-                    {/* ✅ CORRIGIDO */}
+                    {/* ===== ÁREA CORRIGIDA ===== */}
                     <FormControl fullWidth>
                         <InputLabel id="status-label">Status</InputLabel>
                         <Select
@@ -185,10 +179,13 @@ function EditarCotacaoPage() {
                             onChange={handleCotacaoChange}
                         >
                             <MenuItem value="Aberta">Aberta</MenuItem>
-                            <MenuItem value="Concluída">Concluída</MenuItem>
+                            <MenuItem value="Em Análise">Em Análise</MenuItem>
+                            <MenuItem value="Aguardando Aprovação">Aguardando Aprovação</MenuItem>
+                            <MenuItem value="Fechada">Fechada</MenuItem>
                             <MenuItem value="Cancelada">Cancelada</MenuItem>
                         </Select>
                     </FormControl>
+                    {/* ===== FIM DA ÁREA CORRIGIDA ===== */}
                 </Grid>
               </Grid>
 
