@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, CircularProgress, Button, Grid, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import EditIcon from '@mui/icons-material/Edit'; // <<< 1. IMPORTE O ÍCONE DE EDIÇÃO
+import EditIcon from '@mui/icons-material/Edit';
 import { getQuotationById } from '../services/quotationService';
 
 
@@ -12,13 +12,13 @@ const formatCurrency = (value) => {
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
-// Função auxiliar para formatar datas (ex: 25/08/2025)
+// Função auxiliar para formatar datas (ex: 28/08/2025)
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR');
 };
 
-// Função auxiliar para formatar data e hora (ex: 25/08/2025 14:30:00)
+// Função auxiliar para formatar data e hora (ex: 28/08/2025 14:30:00)
 const formatDateTime = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString('pt-BR');
@@ -90,7 +90,6 @@ export default function CotacaoDetailPage() {
 
   return (
     <Box sx={{ p: 2 }}>
-      {/* <<< 2. SEÇÃO DE BOTÕES PARA MELHOR ORGANIZAÇÃO */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Button
           variant="outlined"
@@ -100,7 +99,6 @@ export default function CotacaoDetailPage() {
           Voltar para a Lista
         </Button>
         
-        {/* <<< 3. BOTÃO DE EDITAR IMPLEMENTADO */}
         <Button
           variant="contained"
           color="primary"
@@ -159,6 +157,7 @@ export default function CotacaoDetailPage() {
                 <TableCell align="right">Valor Quote</TableCell>
                 <TableCell align="right">Valor OSC</TableCell>
                 <TableCell align="right">Venda Final</TableCell>
+                <TableCell align="right">Dólar (R$)</TableCell> {/* <<< NOVA COLUNA ADICIONADA */}
                 <TableCell align="right">Subtotal</TableCell>
                 <TableCell>Data Cotação</TableCell>
                 <TableCell>Data Retorno</TableCell> 
@@ -174,6 +173,7 @@ export default function CotacaoDetailPage() {
                   <TableCell align="right">{formatCurrency(item.valor_cout)}</TableCell>
                   <TableCell align="right">{formatCurrency(item.valor_osc)}</TableCell>
                   <TableCell align="right">{formatCurrency(item.valor_venda_final)}</TableCell>
+                  <TableCell align="right">{formatCurrency(item.dolar_cotacao)}</TableCell> {/* <<< NOVO DADO ADICIONADO */}
                   <TableCell align="right">{formatCurrency(item.quantidade * (item.valor_venda_final || item.valor_unitario || 0))}</TableCell>
                   <TableCell>{formatDate(item.data_cotacao)}</TableCell>
                   <TableCell>{formatDate(item.data_retorno)}</TableCell> 

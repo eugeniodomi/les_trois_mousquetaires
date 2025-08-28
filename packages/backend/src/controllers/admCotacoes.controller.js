@@ -81,19 +81,37 @@ exports.create = async (req, res) => {
 };
 
 /**
- * @description Lista todas as cotações mestras cadastradas.
+ * @description Lista todas as cotações mestras, incluindo a contagem de itens e a lista de distribuidores.
  */
 exports.findAll = async (req, res) => {
-    try {
-        const query = "SELECT * FROM cotacoes ORDER BY data_criacao DESC";
-        const { rows } = await pool.query(query);
-        res.json(rows);
-    } catch (error) {
-        console.error("ERRO AO LISTAR COTAÇÕES:", error);
-        res.status(500).json({ message: "Ocorreu um erro ao buscar as cotações." });
-    }
+  try {
+    const query = `
+      SELECT
+        c.*,
+        u.nome AS usuario_criador_nome,
+        (
+          SELECT COUNT(dc.id) 
+          FROM dados_cotacoes dc 
+          WHERE dc.cotacao_id = c.id
+        ) as item_count,
+        (
+          SELECT json_agg(DISTINCT d.nome) 
+          FROM dados_cotacoes dc
+          -- <<< A CORREÇÃO ESTÁ AQUI: de "distribuidores_id" para "distribuidor_id"
+          JOIN distribuidores d ON dc.distribuidor_id = d.id
+          WHERE dc.cotacao_id = c.id
+        ) as distribuidores_nomes
+      FROM cotacoes c
+      LEFT JOIN usuarios u ON c.usuario_criador_id = u.id
+      ORDER BY c.data_criacao DESC;
+    `;
+    const { rows } = await pool.query(query);
+    res.json(rows);
+  } catch (error) {
+    console.error("ERRO AO LISTAR COTAÇÕES:", error);
+    res.status(500).json({ message: "Ocorreu um erro ao buscar as cotações." });
+  }
 };
-
 /**
  * @description Busca uma cotação mestre pelo ID e todos os seus itens associados.
  */
