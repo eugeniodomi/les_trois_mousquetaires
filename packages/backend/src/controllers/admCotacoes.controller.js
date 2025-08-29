@@ -182,12 +182,17 @@ exports.findOne = async (req, res) => {
  * @description Atualiza uma cotação mestre e todos os seus itens associados
  * dentro de uma única transação.
  */
-exports.update = async (req, res) => {
-    const { id } = req.params;
-    // Separa os dados da cotação principal dos itens
-    const { descricao, status, usuario_criador_id, itens_cotacao } = req.body;
+// backend/src/controllers/admCotacoes.controller.js
 
-    // Validações básicas
+exports.update = async (req, res) => {
+    // Log de depuração para verificar os dados recebidos
+    console.log(">>> EXECUTANDO UPDATE DE admCotacoes.controller.js <<<");
+    console.log("DADOS RECEBIDOS:", req.body);
+
+    const { id } = req.params;
+    const { descricao, status, itens_cotacao } = req.body;
+
+    // Validações básicas (mantidas)
     if (!descricao || !status) {
         return res.status(400).json({ message: "Descrição e status são obrigatórios." });
     }
@@ -195,25 +200,40 @@ exports.update = async (req, res) => {
         return res.status(400).json({ message: "A lista de itens da cotação é obrigatória." });
     }
 
-    const client = await pool.connect(); // Pega uma conexão do pool para a transação
+    const client = await pool.connect();
 
     try {
-        await client.query('BEGIN'); // 1. Inicia a transação
+        await client.query('BEGIN');
 
-        // 2. Atualiza os dados na tabela principal 'cotacoes'
-        const updateCotacaoQuery = `
-            UPDATE cotacoes 
-            SET descricao = $1, status = $2 
-            WHERE id = $3;
-        `;
-        await client.query(updateCotacaoQuery, [descricao, status, id]);
+        // ✅ --- LÓGICA DE ATUALIZAÇÃO CORRIGIDA --- ✅
+        // 1. Monta a query principal e seus parâmetros dinamicamente
+        let updateCotacaoQuery = 'UPDATE cotacoes SET descricao = $1, status = $2';
+        const queryParams = [descricao, status];
 
-        // 3. Deleta todos os itens antigos para evitar duplicatas ou itens órfãos
+        // 2. Adiciona a lógica para data_fechamento com base no status
+        const statusNormalizado = status.toLowerCase();
+        if (statusNormalizado === 'fechada') {
+            updateCotacaoQuery += ', data_fechamento = NOW()';
+        } else if (statusNormalizado === 'aberta') {
+            updateCotacaoQuery += ', data_fechamento = NULL';
+        }
+        // Se o status for outro, o campo data_fechamento não é alterado.
+
+        // 3. Finaliza a query com a cláusula WHERE
+        updateCotacaoQuery += ' WHERE id = $3;';
+        queryParams.push(id);
+        
+        // 4. Executa a query construída
+        await client.query(updateCotacaoQuery, queryParams);
+        // ✅ --- FIM DA LÓGICA CORRIGIDA --- ✅
+
+
+        // O restante da funcionalidade base é mantido exatamente como estava.
+        // Deleta todos os itens antigos para evitar duplicatas ou itens órfãos
         const deleteItensQuery = 'DELETE FROM dados_cotacoes WHERE cotacao_id = $1;';
         await client.query(deleteItensQuery, [id]);
 
-        // 4. Insere os novos itens que vieram do frontend
-        // Prepara uma promise para cada item a ser inserido
+        // Insere os novos itens que vieram do frontend
         const itemInsertPromises = itens_cotacao.map(item => {
             const insertItemQuery = `
                 INSERT INTO dados_cotacoes (
@@ -224,35 +244,26 @@ exports.update = async (req, res) => {
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW());
             `;
             const itemValues = [
-                id,
-                item.produto_id,
-                item.distribuidor_id,
-                item.quantidade,
-                item.valor_unitario || null,
-                item.valor_cout || null,
-                item.valor_osc || null,
-                item.valor_venda_final || null,
-                item.dolar_cotacao || null,
-                item.data_cotacao || null,
-                item.data_retorno || null
+                id, item.produto_id, item.distribuidor_id, item.quantidade,
+                item.valor_unitario || null, item.valor_cout || null, item.valor_osc || null,
+                item.valor_venda_final || null, item.dolar_cotacao || null,
+                item.data_cotacao || null, item.data_retorno || null
             ];
             return client.query(insertItemQuery, itemValues);
         });
 
-        // Executa todas as promises de inserção
         await Promise.all(itemInsertPromises);
-
-        await client.query('COMMIT'); // 5. Se tudo deu certo, confirma as alterações
+        await client.query('COMMIT');
 
         res.status(200).json({ message: "Cotação atualizada com sucesso!" });
 
     } catch (error) {
-        await client.query('ROLLBACK'); // 6. Se algo deu errado, desfaz tudo
+        await client.query('ROLLBACK');
         console.error("ERRO AO ATUALIZAR COTAÇÃO (BACKEND):", error);
         res.status(500).json({ message: "Erro interno no servidor ao atualizar a cotação." });
     
     } finally {
-        client.release(); // Libera a conexão de volta para o pool
+        client.release();
     }
 };
 

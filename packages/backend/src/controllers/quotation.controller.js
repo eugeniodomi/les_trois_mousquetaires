@@ -149,8 +149,14 @@ exports.findOne = async (req, res) => {
 
 /**
  * @description Atualiza uma cotação (ex: mudar a descrição ou o status).
+ * A lógica foi aprimorada para gerenciar a data_fechamento automaticamente.
  */
 exports.update = async (req, res) => {
+
+    // ADICIONE ESTA LINHA
+    console.log("--- EXECUTANDO UPDATE DE quotation.controller.js ---"); 
+    console.log("DADOS RECEBIDOS:", req.body);
+    
     try {
         const { id } = req.params;
         const campos = req.body;
@@ -165,16 +171,26 @@ exports.update = async (req, res) => {
         let paramIndex = 1;
 
         for (const chave of chaves) {
-            // Evita que o cliente possa atualizar campos sensíveis
-            if (chave !== 'id' && chave !== 'usuario_criador_id' && chave !== 'data_criacao') {
+            // Ignora 'data_fechamento' no loop, pois será tratada pela lógica de status.
+            if (chave !== 'id' && chave !== 'usuario_criador_id' && chave !== 'data_criacao' && chave !== 'data_fechamento') {
                 setClauses.push(`"${chave}" = $${paramIndex}`);
                 values.push(campos[chave]);
                 paramIndex++;
             }
         }
 
-        if (campos.status && campos.status.toLowerCase() === 'fechada') {
-            setClauses.push(`data_fechamento = NOW()`);
+        // Lógica explícita para tratar data_fechamento com base no status.
+        if (campos.status) {
+            const statusNormalizado = campos.status.toLowerCase();
+            if (statusNormalizado === 'fechada') {
+                setClauses.push(`data_fechamento = NOW()`);
+            } else if (statusNormalizado === 'aberta') {
+                setClauses.push(`data_fechamento = NULL`);
+            }
+        }
+
+        if (setClauses.length === 0) {
+             return res.status(400).json({ message: "Nenhum campo válido para atualização foi fornecido." });
         }
 
         values.push(id);

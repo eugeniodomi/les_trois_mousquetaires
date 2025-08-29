@@ -1,24 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Paper, CircularProgress, Button, Grid, Divider, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  Paper, 
+  CircularProgress, 
+  Button, 
+  Grid, 
+  Divider, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow 
+} from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import { getQuotationById } from '../services/quotationService';
 
-
-// Função auxiliar para formatar moeda
+// Funções auxiliares
 const formatCurrency = (value) => {
   if (value == null || isNaN(value)) return 'N/A';
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
-// Função auxiliar para formatar datas (ex: 28/08/2025)
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR');
 };
 
-// Função auxiliar para formatar data e hora (ex: 28/08/2025 14:30:00)
 const formatDateTime = (dateString) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleString('pt-BR');
@@ -119,20 +130,20 @@ export default function CotacaoDetailPage() {
         <Divider sx={{ my: 2 }} />
         
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <Typography variant="h6">Informações Gerais</Typography>
             <Typography><strong>Status:</strong> {quote.status || 'N/A'}</Typography>
             <Typography><strong>Criado por:</strong> {quote.usuario_criador_nome || `ID: ${quote.usuario_criador_id}`}</Typography>
           </Grid>
           
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <Typography variant="h6">Totais Financeiros</Typography>
             <Typography><strong>Total Quote:</strong> {formatCurrency(calculateTotal('valor_cout'))}</Typography>
             <Typography><strong>Total OSC:</strong> {formatCurrency(calculateTotal('valor_osc'))}</Typography>
             <Typography><strong>Total Venda Final:</strong> {formatCurrency(calculateTotal('valor_venda_final'))}</Typography>
           </Grid>
 
-          <Grid item xs={12} md={4}>
+          <Grid xs={12} md={4}>
             <Typography variant="h6">Datas Relevantes</Typography>
             <Typography><strong>Data de Criação:</strong> {formatDateTime(quote.data_criacao)}</Typography>
             <Typography><strong>Data de Fechamento:</strong> {formatDateTime(quote.data_fechamento)}</Typography>
@@ -149,34 +160,15 @@ export default function CotacaoDetailPage() {
         <TableContainer component={Paper} variant="outlined">
           <Table>
             <TableHead>
+              {/* 🚨 CORREÇÃO FINAL: O erro também estava aqui. Removidos os espaços entre as células do cabeçalho. */}
               <TableRow>
-                <TableCell>Produto (SKU)</TableCell>
-                <TableCell>Distribuidor</TableCell>
-                <TableCell align="right">Qtd.</TableCell>
-                <TableCell align="right">Valor Unitário</TableCell>
-                <TableCell align="right">Valor Quote</TableCell>
-                <TableCell align="right">Valor OSC</TableCell>
-                <TableCell align="right">Venda Final</TableCell>
-                <TableCell align="right">Dólar (R$)</TableCell> {/* <<< NOVA COLUNA ADICIONADA */}
-                <TableCell align="right">Subtotal</TableCell>
-                <TableCell>Data Cotação</TableCell>
-                <TableCell>Data Retorno</TableCell> 
+                <TableCell>Produto (SKU)</TableCell><TableCell>Distribuidor</TableCell><TableCell align="right">Qtd.</TableCell><TableCell align="right">Valor Unitário</TableCell><TableCell align="right">Valor Quote</TableCell><TableCell align="right">Valor OSC</TableCell><TableCell align="right">Venda Final</TableCell><TableCell align="right">Dólar (R$)</TableCell><TableCell align="right">Subtotal</TableCell><TableCell>Data Cotação</TableCell><TableCell>Data Retorno</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {quote.itens && quote.itens.map((item) => (
+              {quote.itens?.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>{`${item.produto_nome || 'N/A'} (${item.produto_sku || 'N/A'})`}</TableCell>
-                  <TableCell>{item.distribuidor_nome || 'N/A'}</TableCell>
-                  <TableCell align="right">{item.quantidade}</TableCell>
-                  <TableCell align="right">{formatCurrency(item.valor_unitario)}</TableCell>
-                  <TableCell align="right">{formatCurrency(item.valor_cout)}</TableCell>
-                  <TableCell align="right">{formatCurrency(item.valor_osc)}</TableCell>
-                  <TableCell align="right">{formatCurrency(item.valor_venda_final)}</TableCell>
-                  <TableCell align="right">{formatCurrency(item.dolar_cotacao)}</TableCell> {/* <<< NOVO DADO ADICIONADO */}
-                  <TableCell align="right">{formatCurrency(item.quantidade * (item.valor_venda_final || item.valor_unitario || 0))}</TableCell>
-                  <TableCell>{formatDate(item.data_cotacao)}</TableCell>
-                  <TableCell>{formatDate(item.data_retorno)}</TableCell> 
+                  <TableCell>{`${item.produto_nome || 'N/A'} (${item.produto_sku || 'N/A'})`}</TableCell><TableCell>{item.distribuidor_nome || 'N/A'}</TableCell><TableCell align="right">{item.quantidade}</TableCell><TableCell align="right">{formatCurrency(item.valor_unitario)}</TableCell><TableCell align="right">{formatCurrency(item.valor_cout)}</TableCell><TableCell align="right">{formatCurrency(item.valor_osc)}</TableCell><TableCell align="right">{formatCurrency(item.valor_venda_final)}</TableCell><TableCell align="right">{formatCurrency(item.dolar_cotacao)}</TableCell><TableCell align="right">{formatCurrency(item.quantidade * (item.valor_venda_final || item.valor_unitario || 0))}</TableCell><TableCell>{formatDate(item.data_cotacao)}</TableCell><TableCell>{formatDate(item.data_retorno)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
