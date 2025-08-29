@@ -22,6 +22,8 @@ import {
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { globalSearchApi } from '../services/searchService.js';
+// 1. IMPORTAR O useNavigate PARA NAVEGAÇÃO
+import { useNavigate } from 'react-router-dom';
 
 const drawerWidth = 320;
 
@@ -54,6 +56,8 @@ export default function SearchPage() {
   const [hasSearched, setHasSearched] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const theme = useTheme();
+  // 2. INICIALIZAR O HOOK useNavigate
+  const navigate = useNavigate();
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -65,7 +69,6 @@ export default function SearchPage() {
     };
   }, [searchTerm]);
 
-  // Mantendo a lógica de busca sem a otimização, como estava no seu código original
   useEffect(() => {
     const performSearch = async () => {
       if (debouncedSearchTerm.length >= 3) {
@@ -74,7 +77,6 @@ export default function SearchPage() {
         setError('');
         try {
           const data = await globalSearchApi(debouncedSearchTerm);
-          // O filtro continua no frontend, como solicitado
           const filteredData = data.filter(item => searchAreas.includes(item.tipo));
           setResults(filteredData);
 
@@ -96,6 +98,28 @@ export default function SearchPage() {
 
     performSearch();
   }, [debouncedSearchTerm, searchAreas]);
+  
+  // 3. CRIAR A FUNÇÃO PARA LIDAR COM O CLIQUE NO CARD
+  const handleCardClick = (result) => {
+    let path = '';
+    // Define o caminho com base no 'tipo' do resultado
+    switch (result.tipo) {
+      case 'produto':
+        path = `/produtos/${result.id}`;
+        break;
+      case 'distribuidor':
+        path = `/distribuidores/${result.id}`;
+        break;
+      case 'cotacao':
+        path = `/cotacoes/${result.id}`;
+        break;
+      default:
+        // Se for outro tipo (usuário, categoria), não faz nada
+        return;
+    }
+    // Navega para a página de detalhes
+    navigate(path);
+  };
 
   const handleSearchAreaChange = (event) => {
     const { value, checked } = event.target;
@@ -140,7 +164,19 @@ export default function SearchPage() {
         <Grid container spacing={3}>
           {results.map((result) => (
             <Grid item xs={12} sm={6} md={4} key={`${result.tipo}-${result.id}`}>
-              <Card>
+              {/* 4. ADICIONAR O onClick E A ESTILIZAÇÃO PARA O CARD */}
+              <Card
+                onClick={() => handleCardClick(result)}
+                sx={{
+                  // Apenas adiciona o cursor de ponteiro se o item for clicável
+                  cursor: ['produto', 'distribuidor', 'cotacao'].includes(result.tipo) ? 'pointer' : 'default',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  '&:hover': {
+                    transform: ['produto', 'distribuidor', 'cotacao'].includes(result.tipo) ? 'scale(1.03)' : 'none',
+                    boxShadow: ['produto', 'distribuidor', 'cotacao'].includes(result.tipo) ? 6 : 1, // Aumenta a sombra no hover para itens clicáveis
+                  },
+                }}
+              >
                 <CardContent>
                   <Typography variant="body2" color="text.secondary">
                     {formatType(result.tipo)}
@@ -180,7 +216,6 @@ export default function SearchPage() {
                 label="Produtos"
               />
               <FormControlLabel
-                // 👇 CORREÇÃO APLICADA AQUI
                 control={<Checkbox checked={searchAreas.includes('distribuidor')} onChange={handleSearchAreaChange} value="distribuidor" />}
                 label="Distribuidores"
               />
