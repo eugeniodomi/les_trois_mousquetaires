@@ -24,6 +24,7 @@ import EditarDistribuidorPage from '../pages/EditarDistribuidorPage';
 
 
 import ProdutosDetailPage from '../pages/ProdutosDetailPage';
+import EditarProdutoPage from '../pages/EditarProdutoPage';
 
 
 // 👇 1. IMPORTE A NOVA PÁGINA DE CADASTRO DE PRODUTO
@@ -72,6 +73,8 @@ export default function AppRoutes() {
             <Route path="novo" element={<CadastroProdutosPage />} />
             {/* 👇 2. ADICIONE A NOVA ROTA DE DETALHES AQUI */}
             <Route path=":id" element={<ProdutosDetailPage />} />
+            <Route path=":id/editar" element={<EditarProdutoPage />} />
+
           </Route>
 
 

@@ -65,3 +65,30 @@ export const getProductById = async (id) => {
     throw error;
   }
 };
+
+/**
+ * Atualiza um produto existente no backend.
+ * @param {string|number} id - O ID do produto a ser atualizado.
+ * @param {object} productData - Os novos dados do produto.
+ * @returns {Promise<object>} O objeto do produto atualizado.
+ */
+export const updateProduct = async (id, productData) => {
+  try {
+    const response = await fetch(`${API_PRODUCTS_URL}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(productData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Ocorreu um erro ao atualizar o produto.');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Falha ao atualizar produto com ID ${id}:`, error);
+    throw error;
+  }
+};
