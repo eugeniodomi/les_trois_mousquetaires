@@ -11,13 +11,11 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import GroupIcon from '@mui/icons-material/Group';
 import SearchIcon from '@mui/icons-material/Search';
-import AppRegistrationIcon from '@mui/icons-material/AppRegistration';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import PostAddIcon from '@mui/icons-material/PostAdd';
-import DescriptionIcon from '@mui/icons-material/Description';
-import EditNoteIcon from '@mui/icons-material/EditNote';
 
 const drawerWidth = 240;
 
@@ -65,22 +63,18 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
   }),
 );
 
+
 export default function Layout() {
   const [open, setOpen] = useState(true);
-  const [registrosOpen, setRegistrosOpen] = useState(false);
-  const [cotacoesOpen, setCotacoesOpen] = useState(false);
+  const [cadastrosOpen, setCadastrosOpen] = useState(false);
   const theme = useTheme();
 
   const handleDrawerToggle = () => {
     setOpen(!open);
   };
 
-  const handleRegistrosClick = () => {
-    setRegistrosOpen(!registrosOpen);
-  };
-
-  const handleCotacoesClick = () => {
-    setCotacoesOpen(!cotacoesOpen);
+  const handleCadastrosClick = () => {
+    setCadastrosOpen(!cadastrosOpen);
   };
 
   return (
@@ -134,78 +128,51 @@ export default function Layout() {
             <ListItemText primary="Dashboards" />
           </ListItemButton>
 
-          {/* ITEM DE MENU "REGISTROS" */}
-          <ListItemButton onClick={handleRegistrosClick}>
-            <ListItemIcon>
-              <AppRegistrationIcon />
-            </ListItemIcon>
-            <ListItemText primary="Registros" />
-            {registrosOpen ? <ExpandLess /> : <ExpandMore />}
-          </ListItemButton>
-
-          {/* SUB-MENU DE REGISTROS */}
-          <Collapse in={registrosOpen} timeout="auto" unmountOnExit>
-            <List component="div" disablePadding>
-              <ListItemButton component={Link} to="/produtos" sx={{ pl: 4 }}>
-                <ListItemIcon>
-                  <InventoryIcon />
-                </ListItemIcon>
-                <ListItemText primary="Produtos" />
-              </ListItemButton>
-
-              {/* ✅ NOVO ITEM DE MENU ADICIONADO AQUI */}
-              <ListItemButton component={Link} to="/produtos/novo" sx={{ pl: 4 }}>
-                <ListItemIcon>
-                  <PostAddIcon />
-                </ListItemIcon>
-                <ListItemText primary="Cadastrar Produto" />
-              </ListItemButton>
-              
-              <ListItemButton component={Link} to="/distribuidores" sx={{ pl: 4 }}>
-                <ListItemIcon>
-                  <GroupIcon />
-                </ListItemIcon>
-                <ListItemText primary="Distribuidores" />
-              </ListItemButton>
-              <ListItemButton component={Link} to="/distribuidores/novo" sx={{ pl: 4 }}>
-                <ListItemIcon>
-                  <PostAddIcon />
-                </ListItemIcon>
-                <ListItemText primary="Cadastrar Distribuidor" />
-              </ListItemButton>
-
-            </List>
-          </Collapse>
-
-          {/* ITEM DE MENU "COTAÇÕES" */}
-          <ListItemButton onClick={handleCotacoesClick}>
-            <ListItemIcon>
-              <DescriptionIcon />
-            </ListItemIcon>
+          {/* MENUS DE VISUALIZAÇÃO SIMPLIFICADOS */}
+          <ListItemButton component={Link} to="/cotacoes">
+            <ListItemIcon><RequestQuoteIcon /></ListItemIcon>
             <ListItemText primary="Cotações" />
-            {cotacoesOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+          <ListItemButton component={Link} to="/produtos">
+            <ListItemIcon><InventoryIcon /></ListItemIcon>
+            <ListItemText primary="Produtos" />
+          </ListItemButton>
+          <ListItemButton component={Link} to="/distribuidores">
+            <ListItemIcon><GroupIcon /></ListItemIcon>
+            <ListItemText primary="Distribuidores" />
           </ListItemButton>
 
-          {/* SUB-MENU DE COTAÇÕES */}
-          <Collapse in={cotacoesOpen} timeout="auto" unmountOnExit>
+          {/* NOVO ITEM DE MENU "CADASTROS" */}
+          <ListItemButton onClick={handleCadastrosClick}>
+            <ListItemIcon>
+              <EditNoteIcon />
+            </ListItemIcon>
+            <ListItemText primary="Cadastros" />
+            {cadastrosOpen ? <ExpandLess /> : <ExpandMore />}
+          </ListItemButton>
+
+          {/* SUB-MENU DE CADASTROS */}
+          <Collapse in={cadastrosOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
-              <ListItemButton component={Link} to="/cotacoes" sx={{ pl: 4 }}>
-                <ListItemIcon>
-                  <RequestQuoteIcon />
-                </ListItemIcon>
-                <ListItemText primary="Ver Cotações" />
-              </ListItemButton>
               <ListItemButton component={Link} to="/cotacoes/cadastrar" sx={{ pl: 4 }}>
                 <ListItemIcon>
                   <PostAddIcon />
                 </ListItemIcon>
                 <ListItemText primary="Nova Cotação" />
               </ListItemButton>
-              <ListItemButton component={Link} to="/cotacoes/editar" sx={{ pl: 4 }}>
+
+              <ListItemButton component={Link} to="/produtos/novo" sx={{ pl: 4 }}>
                 <ListItemIcon>
-                  <EditNoteIcon />
+                  <PostAddIcon />
                 </ListItemIcon>
-                <ListItemText primary="Editar Cotação" />
+                <ListItemText primary="Novo Produto" />
+              </ListItemButton>
+              
+              <ListItemButton component={Link} to="/distribuidores/novo" sx={{ pl: 4 }}>
+                <ListItemIcon>
+                  <PostAddIcon />
+                </ListItemIcon>
+                <ListItemText primary="Novo Distribuidor" />
               </ListItemButton>
             </List>
           </Collapse>

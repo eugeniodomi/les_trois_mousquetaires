@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container, Typography, Grid, TextField, Button, Box, Paper,
-  Snackbar, Alert, CircularProgress, Divider,
-  FormControl, InputLabel, Select, MenuItem
+  Snackbar, Alert, CircularProgress, Divider, MenuItem
 } from '@mui/material';
 
 // --- SERVIÇOS DA API ---
@@ -17,22 +16,17 @@ const categoriasDisponiveis = [
 
 function CadastroProdutosPage() {
   const navigate = useNavigate();
-
-  // --- ESTADOS DO COMPONENTE ---
   const [formData, setFormData] = useState({
     nome: '',
     descricao: '',
     sku: '',
     categoria_id: null
   });
-  
   const [formLoading, setFormLoading] = useState(false);
   const [notification, setNotification] = useState({ open: false, message: '', severity: 'success' });
 
-  // --- HANDLERS ---
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
     setFormData(prevState => ({
       ...prevState,
       [name]: value === '' ? null : value
@@ -40,9 +34,7 @@ function CadastroProdutosPage() {
   };
 
   const handleCloseNotification = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
+    if (reason === 'clickaway') return;
     setNotification({ ...notification, open: false });
   };
 
@@ -59,11 +51,7 @@ function CadastroProdutosPage() {
     try {
       await createProduct(formData);
       setNotification({ open: true, message: 'Produto cadastrado com sucesso!', severity: 'success' });
-      
-      setTimeout(() => {
-        navigate('/produtos');
-      }, 1500);
-
+      setTimeout(() => navigate('/produtos'), 1500);
     } catch (err) {
       setNotification({ open: true, message: err.message || 'Ocorreu um erro ao cadastrar o produto.', severity: 'error' });
       setFormLoading(false);
@@ -78,10 +66,8 @@ function CadastroProdutosPage() {
             Cadastro de Novo Produto
           </Typography>
           <Divider sx={{ my: 2 }} />
-          
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Grid container spacing={3}>
-              {/* --- DADOS PRINCIPAIS --- */}
               <Grid item xs={12}>
                 <TextField
                   name="nome"
@@ -93,21 +79,27 @@ function CadastroProdutosPage() {
                   autoFocus
                 />
               </Grid>
-
-              <Grid item xs={12}>
+              
+              <Grid item xs={12} md={6}>
                 <TextField
-                  name="descricao"
-                  label="Descrição do Produto"
-                  value={formData.descricao}
+                  id="categoria-select"
+                  name="categoria_id"
+                  value={formData.categoria_id === null ? '' : formData.categoria_id}
                   onChange={handleChange}
+                  label="Categoria"
                   fullWidth
-                  multiline
-                  rows={3}
-                />
+                  select
+                  // Força uma largura mínima para o componente no estado inicial
+                  sx={{ minWidth: 220 }} 
+                >
+                  {categoriasDisponiveis.map((cat) => (
+                    <MenuItem key={cat.id} value={cat.id}>
+                      {cat.nome}
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
-
-              {/* --- DIVISOR "CLASSIFICAÇÃO" REMOVIDO --- */}
-
+              
               <Grid item xs={12} md={6}>
                 <TextField
                   name="sku"
@@ -118,28 +110,19 @@ function CadastroProdutosPage() {
                 />
               </Grid>
               
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="categoria-select-label">Categoria</InputLabel>
-                  <Select
-                    labelId="categoria-select-label"
-                    id="categoria-select"
-                    name="categoria_id"
-                    value={formData.categoria_id === null ? '' : formData.categoria_id}
-                    label="Categoria"
-                    onChange={handleChange}
-                  >
-                    {categoriasDisponiveis.map((cat) => (
-                      <MenuItem key={cat.id} value={cat.id}>
-                        {cat.nome}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+              <Grid item xs={12}>
+                <TextField
+                  name="descricao"
+                  label="Descrição do Produto"
+                  value={formData.descricao}
+                  onChange={handleChange}
+                  fullWidth
+                  multiline
+                  rows={4}
+                />
               </Grid>
             </Grid>
 
-            {/* --- BOTÕES DE AÇÃO --- */}
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
               <Button 
                 variant="outlined" 
@@ -164,7 +147,6 @@ function CadastroProdutosPage() {
         </Paper>
       </Container>
       
-      {/* --- COMPONENTE DE NOTIFICAÇÃO --- */}
       <Snackbar 
         open={notification.open} 
         autoHideDuration={6000} 
