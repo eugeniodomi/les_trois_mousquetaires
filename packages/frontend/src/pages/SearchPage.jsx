@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // Adicionado useEffect
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -19,7 +19,6 @@ import {
   FormControlLabel,
   Checkbox,
 } from '@mui/material';
-// O ícone de busca não é mais necessário no botão, mas pode ser útil no TextField
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { globalSearchApi } from '../services/searchService.js';
@@ -47,9 +46,8 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
 
 export default function SearchPage() {
   const [searchTerm, setSearchTerm] = useState('');
-  // NOVO ESTADO: Armazena o termo de busca após a pausa na digitação (debouncing)
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [searchAreas, setSearchAreas] = useState(['produto', 'distribuidor', 'usuario', 'categoria']);
+  const [searchAreas, setSearchAreas] = useState(['produto', 'distribuidor', 'usuario', 'categoria', 'cotacao']);
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -57,33 +55,26 @@ export default function SearchPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const theme = useTheme();
 
-  // EFEITO 1: DEBOUNCING
-  // Este efeito cria um timer para atualizar o 'debouncedSearchTerm' somente
-  // 300ms após o usuário parar de digitar.
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
-    }, 300); // 300ms de atraso
+    }, 300);
 
-    // Função de limpeza: cancela o timer anterior a cada nova tecla digitada
     return () => {
       clearTimeout(timerId);
     };
   }, [searchTerm]);
 
-  // EFEITO 2: CHAMADA À API
-  // Este efeito é disparado sempre que o 'debouncedSearchTerm' muda.
-  // É aqui que a busca acontece.
+  // Mantendo a lógica de busca sem a otimização, como estava no seu código original
   useEffect(() => {
     const performSearch = async () => {
-      // Condição: só busca se o termo tiver 3+ caracteres
       if (debouncedSearchTerm.length >= 3) {
         setHasSearched(true);
         setLoading(true);
         setError('');
         try {
           const data = await globalSearchApi(debouncedSearchTerm);
-          // O filtro dos checkboxes continua funcionando aqui no frontend
+          // O filtro continua no frontend, como solicitado
           const filteredData = data.filter(item => searchAreas.includes(item.tipo));
           setResults(filteredData);
 
@@ -97,7 +88,6 @@ export default function SearchPage() {
           setLoading(false);
         }
       } else {
-        // Limpa os resultados se a busca for muito curta
         setResults([]);
         setHasSearched(false);
         setError('');
@@ -105,7 +95,7 @@ export default function SearchPage() {
     };
 
     performSearch();
-  }, [debouncedSearchTerm, searchAreas]); // Roda a busca de novo se os filtros mudarem também
+  }, [debouncedSearchTerm, searchAreas]);
 
   const handleSearchAreaChange = (event) => {
     const { value, checked } = event.target;
@@ -135,12 +125,10 @@ export default function SearchPage() {
             variant="outlined"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            // Mostra o spinner de carregamento diretamente no campo de busca
             InputProps={{
               endAdornment: loading ? <CircularProgress size={24} /> : null,
             }}
           />
-          {/* O BOTÃO "BUSCAR" FOI REMOVIDO */}
           <IconButton onClick={() => setFiltersOpen(!filtersOpen)} sx={{ height: '56px', width: '56px' }}>
             {filtersOpen ? <ChevronRightIcon /> : <FilterListIcon />}
           </IconButton>
@@ -165,7 +153,7 @@ export default function SearchPage() {
           ))}
         </Grid>
       </Main>
-      {/* O Drawer de filtros permanece exatamente o mesmo */}
+      
       <Drawer
         variant="persistent"
         anchor="right"
@@ -192,8 +180,13 @@ export default function SearchPage() {
                 label="Produtos"
               />
               <FormControlLabel
+                // 👇 CORREÇÃO APLICADA AQUI
                 control={<Checkbox checked={searchAreas.includes('distribuidor')} onChange={handleSearchAreaChange} value="distribuidor" />}
                 label="Distribuidores"
+              />
+              <FormControlLabel
+                control={<Checkbox checked={searchAreas.includes('cotacao')} onChange={handleSearchAreaChange} value="cotacao" />}
+                label="Cotações"
               />
               <FormControlLabel
                 control={<Checkbox checked={searchAreas.includes('usuario')} onChange={handleSearchAreaChange} value="usuario" />}

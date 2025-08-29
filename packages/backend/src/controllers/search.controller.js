@@ -1,8 +1,8 @@
+// search.controller.js
 const pool = require('../config/database');
 
 /**
  * Configuração das entidades para a busca global.
- * O filtro de status foi removido para incluir todos os registros.
  */
 const searchConfig = [
     {
@@ -11,7 +11,7 @@ const searchConfig = [
         titleField: 'nome',
         subtitleField: 'sku',
         searchFields: ['nome', 'sku'],
-        filter: null // Busca em todos os produtos, independentemente do status.
+        filter: null 
     },
     {
         type: 'distribuidor',
@@ -19,7 +19,7 @@ const searchConfig = [
         titleField: 'nome',
         subtitleField: 'cnpj',
         searchFields: ['nome', 'cnpj'],
-        filter: null // Busca em todos os distribuidores, independentemente do status.
+        filter: null
     },
     {
         type: 'usuario',
@@ -27,7 +27,7 @@ const searchConfig = [
         titleField: 'nome',
         subtitleField: 'email',
         searchFields: ['nome', 'email'],
-        filter: null // Busca em todos os usuários, independentemente do status.
+        filter: null
     },
     {
         type: 'categoria',
@@ -35,6 +35,15 @@ const searchConfig = [
         titleField: 'nome',
         subtitleField: "'Categoria de produto'",
         searchFields: ['nome'],
+        filter: null
+    },
+    // CONFIGURAÇÃO DE COTAÇÃO COM BUSCA PELA DESCRIÇÃO
+    {
+        type: 'cotacao',
+        table: 'cotacoes',
+        titleField: 'descricao',
+        subtitleField: "CONCAT('Status: ', status, ' - ID: ', id)",
+        searchFields: ['descricao', 'status::TEXT'], // <--- É AQUI QUE A MÁGICA ACONTECE
         filter: null
     }
 ];
@@ -75,7 +84,7 @@ exports.globalSearch = async (req, res) => {
 
         res.status(200).json(allResults);
 
-    } catch (error) { // CORREÇÃO: Adicionadas as chaves {} ao redor do bloco catch.
+    } catch (error) {
         console.error('Erro na busca global:', error);
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
