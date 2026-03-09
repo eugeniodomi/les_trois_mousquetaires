@@ -43,13 +43,7 @@ export default function AppRoutes() {
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
           
-          {/* --- ROTAS DE PRODUTOS --- */}
-          <Route path="produtos">
-            <Route index element={<ProdutosPage />} />
-            {/* 👇 2. ADICIONE A NOVA ROTA AQUI */}
-            <Route path="novo" element={<CadastroProdutosPage />} />
-          </Route>
-          
+
           {/* --- ROTAS DE DISTRIBUIDORES --- */}
           <Route path="distribuidores">
             <Route index element={<DistribuidoresPage />} />
@@ -67,16 +61,13 @@ export default function AppRoutes() {
           </Route>
 
 
-           {/* --- ROTAS DE PRODUTOS --- */}
+          {/* --- ROTAS DE PRODUTOS --- */}
           <Route path="produtos">
             <Route index element={<ProdutosPage />} />
             <Route path="novo" element={<CadastroProdutosPage />} />
-            {/* 👇 2. ADICIONE A NOVA ROTA DE DETALHES AQUI */}
             <Route path=":id" element={<ProdutosDetailPage />} />
             <Route path=":id/editar" element={<EditarProdutoPage />} />
-
           </Route>
-
 
           <Route path="dashboards" element={<DashboardsPage />} />
           <Route path="buscar" element={<SearchPage />} />
