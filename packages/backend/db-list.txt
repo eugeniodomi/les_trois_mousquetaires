@@ -1,0 +1,8 @@
+Tables: 
+produtos
+distribuidores
+api_testes
+dados_cotacoes
+usuarios
+categorias
+cotacoes

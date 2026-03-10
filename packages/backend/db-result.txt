@@ -1,0 +1,10 @@
+Connection error: error: relação "Users" não existe
+    at Parser.parseErrorMessage (C:\Users\eugen\Desktop\All\Nova pasta (2)\les_trois_mousquetaires\packages\backend\node_modules\pg-protocol\dist\parser.js:285:98)
+    at Parser.handlePacket (C:\Users\eugen\Desktop\All\Nova pasta (2)\les_trois_mousquetaires\packages\backend\node_modules\pg-protocol\dist\parser.js:122:29)
+    at Parser.parse (C:\Users\eugen\Desktop\All\Nova pasta (2)\les_trois_mousquetaires\packages\backend\node_modules\pg-protocol\dist\parser.js:35:38)
+    at Socket.<anonymous> (C:\Users\eugen\Desktop\All\Nova pasta (2)\les_trois_mousquetaires\packages\backend\node_modules\pg-protocol\dist\index.js:11:42)
+    at Socket.emit (node:events:518:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)

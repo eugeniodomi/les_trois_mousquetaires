@@ -2,7 +2,7 @@
 
 // Define a URL base da sua API a partir das variáveis de ambiente.
 // Garanta que o seu ficheiro .env no frontend tem a linha: VITE_API_URL=http://localhost:5000/api
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 /**
  * Busca a lista completa de todas as cotações.
