@@ -16,8 +16,12 @@ export default function HomePage() {
   const { user } = useAuth();
 
   useEffect(() => {
+    console.log("Current User in State:", user);
     const loadData = async () => {
-      if (!user || !user.id) return;
+      if (!user || !user.id) {
+        console.error("CRITICAL: No user ID found in Context!");
+        return;
+      }
       try {
         const homeData = await getHomeData(user.id);
         setData(homeData);

@@ -4,23 +4,28 @@ const pool = require('../config/database');
 exports.getHomeData = async (req, res) => {
   try {
     const userId = req.query.userId;
-    if (!userId) {
-      return res.status(400).json({ error: 'User ID is required' });
+    console.log("Received userId in Controller:", userId);
+    
+    if (!userId || userId === 'undefined' || userId === 'null') {
+      console.error("CRITICAL: userId is missing from the request");
+      return res.status(400).json({ error: "CRITICAL: userId is missing from the request" });
     }
 
+    console.log('EXECUTING DB QUERY FOR USER:', userId);
+
     // Open quotes count
-    const openQuotesResult = await pool.query(`SELECT COUNT(*) FROM cotacoes WHERE status = 'Aberta' AND usuario_criador_id = $1`, [userId]);
+    const openQuotesResult = await pool.query(`SELECT COUNT(id) FROM cotacoes WHERE LOWER(status::text) = 'aberta' AND usuario_criador_id = $1`, [userId]);
     const openQuotes = parseInt(openQuotesResult.rows[0].count, 10);
 
     // Recent quotes count (last 7 days for example)
-    const recentQuotesResult = await pool.query(`SELECT COUNT(*) FROM cotacoes WHERE data_criacao >= NOW() - INTERVAL '7 days' AND usuario_criador_id = $1`, [userId]);
+    const recentQuotesResult = await pool.query(`SELECT COUNT(id) FROM cotacoes WHERE data_criacao >= NOW() - INTERVAL '7 days' AND usuario_criador_id = $1`, [userId]);
     const recentQuotesCount = parseInt(recentQuotesResult.rows[0].count, 10);
 
     // Latest open quotes
     const openQuotesListResult = await pool.query(`
       SELECT c.id, c.descricao as name, c.data_criacao as date, c.status
       FROM cotacoes c
-      WHERE c.status = 'Aberta' AND c.prioridade = true AND c.usuario_criador_id = $1
+      WHERE LOWER(c.status::text) = 'aberta' AND c.usuario_criador_id = $1
       ORDER BY c.data_criacao DESC
       LIMIT 5
     `, [userId]);

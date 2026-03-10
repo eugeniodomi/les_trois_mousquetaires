@@ -13,7 +13,13 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      const parsedUser = JSON.parse(storedUser);
+      // Auto-patch: Se o usuário logado de uma sessão antiga não tiver ID, injeta id: 1 nativamente
+      if (!parsedUser.id) {
+        parsedUser.id = 1;
+        localStorage.setItem('user', JSON.stringify(parsedUser));
+      }
+      setUser(parsedUser);
     }
   }, []);
 
