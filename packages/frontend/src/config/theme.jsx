@@ -65,6 +65,13 @@ export const CustomThemeProvider = ({ children }) => {
         components: {
           MuiCssBaseline: {
             styleOverrides: `
+              a {
+                color: inherit;
+                text-decoration: none;
+              }
+              a:visited {
+                color: inherit;
+              }
               .recharts-text, .recharts-cartesian-axis-tick-value {
                 fill: ${mode === 'light' ? '#111E2A' : '#FFFFFF'} !important;
               }
@@ -76,6 +83,17 @@ export const CustomThemeProvider = ({ children }) => {
                 color: ${mode === 'light' ? '#111E2A' : '#FFFFFF'} !important;
               }
             `,
+          },
+          MuiLink: {
+            styleOverrides: {
+              root: {
+                textDecoration: 'none',
+                color: 'inherit',
+                '&:visited': {
+                  color: 'inherit',
+                },
+              },
+            },
           },
         },
       }),

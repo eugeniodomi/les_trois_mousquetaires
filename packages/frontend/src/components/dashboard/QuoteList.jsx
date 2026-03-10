@@ -1,10 +1,11 @@
 import React from 'react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { Paper, Typography, List, ListItem, ListItemText, ListItemAvatar, Avatar, Divider, Chip } from '@mui/material';
 import FolderIcon from '@mui/icons-material/Folder';
 
 // ===== CORREÇÃO AQUI =====
 export default function QuoteList({ title, quotes }) {
+  const location = useLocation();
   return (
     <Paper sx={{ p: 2, height: '100%' }}>
       <Typography variant="h6" gutterBottom>{title}</Typography>
@@ -16,6 +17,7 @@ export default function QuoteList({ title, quotes }) {
               button
               component={RouterLink}
               to={`/cotacoes/${quote.id}`}
+              state={{ from: location.pathname }}
             >
               <ListItemAvatar>
                 <Avatar>
