@@ -15,7 +15,6 @@ import DistribuidoresPage from '../pages/DistribuidoresPage';
 import CotacoesPage from '../pages/CotacoesPage';
 import CotacaoDetailPage from '../pages/CotacaoDetailPage';
 import DashboardsPage from '../pages/DashboardsPage';
-import GlobalDashboard from '../pages/GlobalDashboard';
 import SearchPage from '../pages/SearchPage';
 import CadastroCotacaoPage from '../pages/CadastroCotacaoPage';
 import EditarCotacaoPage from '../pages/EditarCotacaoPage';
@@ -71,7 +70,6 @@ export default function AppRoutes() {
           </Route>
 
           <Route path="dashboards" element={<DashboardsPage />} />
-          <Route path="global-dashboard" element={<GlobalDashboard />} />
           <Route path="buscar" element={<SearchPage />} />
         </Route>
       </Route>
