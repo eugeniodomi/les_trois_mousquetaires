@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Button, Drawer, List, ListItem, ListItemText, IconButton, useTheme } from '@mui/material';
+import { Box, Typography, Button, Drawer, List, ListItem, ListItemButton, ListItemText, IconButton, useTheme } from '@mui/material';
 import RGL from 'react-grid-layout';
 const ResponsiveGridLayout = RGL.Responsive || RGL.default?.Responsive || RGL;
 
@@ -78,7 +78,12 @@ export default function HomePage() {
     const fetchLayout = async () => {
       if (!user?.id) return;
       try {
-        const res = await fetch(`/api/usuarios/layout?userId=${user.id}`);
+        const token = localStorage.getItem('token');
+        const res = await fetch(`http://localhost:5000/api/users/layout?userId=${user.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         if (res.ok) {
           const data = await res.json();
           let parsedLayout = data.layout;
@@ -112,15 +117,23 @@ export default function HomePage() {
   const saveLayout = async () => {
     if (!user?.id) return;
     try {
-      await fetch('/api/usuarios/layout', {
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:5000/api/users/layout', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({ userId: user.id, layout })
       });
+      
+      if (!res.ok) throw new Error('Falha ao salvar no backend');
+      
       setIsEditing(false);
+      alert('Layout salvo com sucesso!');
     } catch (err) {
       console.error('Failed to save layout:', err);
-      alert('Erro ao salvar o layout.');
+      alert('Erro ao salvar o layout. Verifique o console.');
     }
   };
 
@@ -254,9 +267,11 @@ export default function HomePage() {
           </Typography>
           <List>
             {widgetsToAdd.length > 0 ? widgetsToAdd.map(wId => (
-              <ListItem button key={wId} onClick={() => addWidget(wId)}>
-                <ListItemText primary={WIDGET_REGISTRY[wId].name} />
-                <AddIcon color="action" />
+              <ListItem disablePadding key={wId}>
+                <ListItemButton onClick={() => addWidget(wId)}>
+                  <ListItemText primary={WIDGET_REGISTRY[wId].name} />
+                  <AddIcon color="action" />
+                </ListItemButton>
               </ListItem>
             )) : (
               <Typography variant="body2" color="textSecondary">

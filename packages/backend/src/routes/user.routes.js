@@ -30,7 +30,7 @@ router.get('/layout', async (req, res) => {
     res.json({ layout: result.rows[0].dashboard_layout });
   } catch (err) {
     console.error('Error fetching layout:', err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 
@@ -39,16 +39,28 @@ router.get('/layout', async (req, res) => {
 router.put('/layout', async (req, res) => {
   try {
     const { userId, layout } = req.body;
+    
+    console.log(`[BACKEND] Saving layout for user: ${userId}`);
+    console.log(`[BACKEND] Layout payload size:`, layout ? layout.length : 'undefined', 'items');
+    
     if (!userId) {
+      console.warn('[BACKEND] Missing userId in layout save request');
       return res.status(400).json({ msg: 'User ID is required' });
     }
 
-    await pool.query('UPDATE usuarios SET dashboard_layout = $1 WHERE id = $2', [JSON.stringify(layout), userId]);
+    const debugQuery = 'UPDATE usuarios SET dashboard_layout = $1 WHERE id = $2 RETURNING id';
+    const result = await pool.query(debugQuery, [JSON.stringify(layout), userId]);
+    
+    if (result.rowCount === 0) {
+       console.warn(`[BACKEND] User ${userId} not found in DB during layout save.`);
+       return res.status(404).json({ msg: 'Usuário não encontrado.' });
+    }
 
+    console.log(`[BACKEND] Layout successfully saved to DB for user ${userId}`);
     res.json({ msg: 'Layout saved successfully' });
   } catch (err) {
     console.error('Error saving layout:', err.message);
-    res.status(500).send('Server Error');
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 
