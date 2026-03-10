@@ -51,6 +51,38 @@ exports.getGlobalMetrics = async (req, res) => {
             `;
             const topRepsResult = await client.query(topRepsQuery);
 
+            // 4. Distributor Response Time (SLA)
+            const slaQuery = `
+                SELECT 
+                    d.nome as distribuidor,
+                    COALESCE(AVG(CASE WHEN c.data_criacao >= CURRENT_DATE - INTERVAL '21 days' THEN EXTRACT(EPOCH FROM (dc.data_retorno - c.data_criacao))/3600 ELSE NULL END), 0) as avg_hours_3_weeks,
+                    COALESCE(AVG(CASE WHEN c.data_criacao >= CURRENT_DATE - INTERVAL '30 days' THEN EXTRACT(EPOCH FROM (dc.data_retorno - c.data_criacao))/3600 ELSE NULL END), 0) as avg_hours_1_month,
+                    COALESCE(AVG(EXTRACT(EPOCH FROM (dc.data_retorno - c.data_criacao))/3600), 0) as avg_hours_all_time
+                FROM dados_cotacoes dc
+                JOIN cotacoes c ON dc.cotacao_id = c.id
+                JOIN distribuidores d ON dc.distribuidor_id = d.id
+                WHERE dc.data_retorno IS NOT NULL
+                GROUP BY d.nome
+                ORDER BY avg_hours_all_time ASC
+                LIMIT 5
+            `;
+            const slaResult = await client.query(slaQuery);
+
+            // 5. Pricing Benchmark by Distributor
+            const pricingQuery = `
+                SELECT 
+                    d.nome as distribuidor,
+                    AVG(dc.valor_unitario) as avg_price,
+                    COUNT(dc.id) as total_items_quoted
+                FROM dados_cotacoes dc
+                JOIN distribuidores d ON dc.distribuidor_id = d.id
+                WHERE dc.valor_unitario IS NOT NULL
+                GROUP BY d.nome
+                ORDER BY avg_price ASC
+                LIMIT 5
+            `;
+            const pricingResult = await client.query(pricingQuery);
+
             res.status(200).json({
                 pipeline_total: pipelineTotal,
                 win_rate_percentage: winRate,
@@ -59,6 +91,17 @@ exports.getGlobalMetrics = async (req, res) => {
                     id: row.id,
                     nome: row.nome,
                     total_sales: parseFloat(row.total_sales) || 0
+                })),
+                sla_distribuidores: slaResult.rows.map(row => ({
+                    distribuidor: row.distribuidor,
+                    avg_hours_3_weeks: parseFloat(row.avg_hours_3_weeks) || 0,
+                    avg_hours_1_month: parseFloat(row.avg_hours_1_month) || 0,
+                    avg_hours_all_time: parseFloat(row.avg_hours_all_time) || 0
+                })),
+                pricing_benchmark: pricingResult.rows.map(row => ({
+                    distribuidor: row.distribuidor,
+                    avg_price: parseFloat(row.avg_price) || 0,
+                    total_items_quoted: parseInt(row.total_items_quoted, 10) || 0
                 }))
             });
         } finally {
