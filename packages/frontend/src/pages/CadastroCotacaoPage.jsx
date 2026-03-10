@@ -128,21 +128,26 @@ function CadastroCotacaoPage() {
 
   return (
     <>
-      {/* --- MUDANÇA 1: AUMENTANDO A LARGURA MÁXIMA DA PÁGINA --- */}
-      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Paper elevation={2} sx={{ borderRadius: 2, p: 4 }}>
+          <Typography variant="h5" fontWeight="bold" gutterBottom>
             Cadastro de Nova Cotação
           </Typography>
+          
+          <Divider sx={{ my: 3 }} />
+
           <Box component="form" onSubmit={handleSubmit}>
             
+            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+              Informações Básicas
+            </Typography>
+
             <Grid container spacing={3} sx={{ mb: 4 }}>
-              <Grid item xs={12} md={7}>
-                <TextField name="descricao" label="Descrição da Cotação" value={cotacao.descricao} onChange={handleCotacaoChange} fullWidth required />
+              <Grid item xs={12} md={6}>
+                <TextField variant="outlined" name="descricao" label="Descrição da Cotação" value={cotacao.descricao} onChange={handleCotacaoChange} fullWidth required />
               </Grid>
-              <Grid item xs={12} md={5}>
-                {/* --- MUDANÇA 2: FORÇANDO LARGURA MÍNIMA NO CAMPO DE USUÁRIO --- */}
-                <FormControl fullWidth required sx={{ minWidth: 280 }}>
+              <Grid item xs={12} md={3}>
+                <FormControl variant="outlined" fullWidth required>
                   <InputLabel id="usuario-criador-label">Usuário Criador</InputLabel>
                   <Select
                     labelId="usuario-criador-label" name="usuario_criador_id"
@@ -154,8 +159,8 @@ function CadastroCotacaoPage() {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth>
+              <Grid item xs={12} md={3}>
+                <FormControl variant="outlined" fullWidth>
                   <InputLabel id="status-label">Status</InputLabel>
                   <Select labelId="status-label" name="status" value={cotacao.status} label="Status" disabled >
                     <MenuItem value="Aberta">Aberta</MenuItem>
@@ -164,62 +169,73 @@ function CadastroCotacaoPage() {
               </Grid>
             </Grid>
 
-            <Divider sx={{ my: 2 }}><Typography variant="h6">Itens da Cotação</Typography></Divider>
+            <Divider sx={{ my: 3 }}>
+              <Typography variant="subtitle1" color="text.secondary">Itens da Cotação</Typography>
+            </Divider>
 
             {itens.map((item, index) => (
-              <Paper key={item.uniqueId} variant="outlined" sx={{ p: 2, mb: 2 }}>
-                <Grid container spacing={2} alignItems="center">
+              <Box key={item.uniqueId} sx={{ mb: 4 }}>
+                <Grid container spacing={3} alignItems="center">
                   
-                  <Grid item xs={12}>
-                    {/* --- MUDANÇA 2: FORÇANDO LARGURA MÍNIMA NO CAMPO DE PRODUTO --- */}
+                  <Grid item xs={12} md={6}>
                     <Autocomplete
                       options={produtos}
                       getOptionLabel={(option) => `${option.nome} (SKU: ${option.sku || 'N/A'})`}
                       value={produtos.find(p => p.id === item.produto_id) || null}
                       onChange={(event, newValue) => handleAutocompleteChange(index, 'produto_id', newValue)}
                       isOptionEqualToValue={(option, value) => option.id === value.id}
-                      renderInput={(params) => <TextField {...params} label="Produto" required fullWidth />}
-                      sx={{ minWidth: 300 }}
+                      renderInput={(params) => <TextField {...params} variant="outlined" label="Produto" required fullWidth />}
                     />
                   </Grid>
 
-                  <Grid item xs={12}>
-                    {/* --- MUDANÇA 2: FORÇANDO LARGURA MÍNIMA NO CAMPO DE DISTRIBUIDOR --- */}
+                  <Grid item xs={12} md={6}>
                     <Autocomplete
                       options={distribuidores}
                       getOptionLabel={(option) => option.nome}
                       value={distribuidores.find(d => d.id === item.distribuidor_id) || null}
                       onChange={(event, newValue) => handleAutocompleteChange(index, 'distribuidor_id', newValue)}
                       isOptionEqualToValue={(option, value) => option.id === value.id}
-                      renderInput={(params) => <TextField {...params} label="Distribuidor" required fullWidth />}
-                      sx={{ minWidth: 300 }}
+                      renderInput={(params) => <TextField {...params} variant="outlined" label="Distribuidor" required fullWidth />}
                     />
                   </Grid>
                   
-                  {/* Campos numéricos e de data (sem alterações) */}
-                  <Grid item xs={6} sm={4} md={2}><TextField name="quantidade" label="Quantidade" type="number" value={item.quantidade} onChange={(e) => handleItemChange(index, e)} fullWidth required/></Grid>
-                  <Grid item xs={6} sm={4} md={2}><TextField name="valor_unitario" label="Valor Unitário" type="number" value={item.valor_unitario} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
-                  <Grid item xs={6} sm={4} md={2}><TextField name="valor_cout" label="Valor QUOTE" type="number" value={item.valor_cout} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
-                  <Grid item xs={6} sm={4} md={2}><TextField name="valor_osc" label="Valor OSC" type="number" value={item.valor_osc} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
-                  <Grid item xs={6} sm={4} md={2}><TextField name="valor_venda_final" label="Venda Final" type="number" value={item.valor_venda_final} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
-                  <Grid item xs={6} sm={4} md={2}><TextField name="dolar_cotacao" label="Dólar Cotação" type="number" value={item.dolar_cotacao} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
-                  <Grid item xs={12} sm={5}><TextField name="data_cotacao" label="Data de Início da Cotação" type="date" value={item.data_cotacao} onChange={(e) => handleItemChange(index, e)} fullWidth InputLabelProps={{ shrink: true }}/></Grid>
-                  <Grid item xs={12} sm={5}><TextField name="data_retorno" label="Data de Retorno" type="date" value={item.data_retorno} onChange={(e) => handleItemChange(index, e)} fullWidth InputLabelProps={{ shrink: true }}/></Grid>
-                  <Grid item xs={12} sm={2} container justifyContent="flex-end"><IconButton onClick={() => removerItem(index)} color="error" disabled={itens.length === 1}><DeleteIcon /></IconButton></Grid>
+                  <Grid item xs={12} sm={4} md={2}><TextField variant="outlined" name="quantidade" label="Quantidade" type="number" value={item.quantidade} onChange={(e) => handleItemChange(index, e)} fullWidth required/></Grid>
+                  <Grid item xs={12} sm={4} md={2}><TextField variant="outlined" name="valor_unitario" label="Valor Unitário" type="number" value={item.valor_unitario} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
+                  <Grid item xs={12} sm={4} md={2}><TextField variant="outlined" name="valor_cout" label="Valor QUOTE" type="number" value={item.valor_cout} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
+                  <Grid item xs={12} sm={4} md={2}><TextField variant="outlined" name="valor_osc" label="Valor OSC" type="number" value={item.valor_osc} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
+                  <Grid item xs={12} sm={4} md={2}><TextField variant="outlined" name="valor_venda_final" label="Venda Final" type="number" value={item.valor_venda_final} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
+                  <Grid item xs={12} sm={4} md={2}><TextField variant="outlined" name="dolar_cotacao" label="Dólar Cotação" type="number" value={item.dolar_cotacao} onChange={(e) => handleItemChange(index, e)} fullWidth/></Grid>
+                  
+                  <Grid item xs={12} sm={6} md={5}><TextField variant="outlined" name="data_cotacao" label="Data de Início da Cotação" type="date" value={item.data_cotacao} onChange={(e) => handleItemChange(index, e)} fullWidth InputLabelProps={{ shrink: true }}/></Grid>
+                  <Grid item xs={12} sm={6} md={5}><TextField variant="outlined" name="data_retorno" label="Data de Retorno" type="date" value={item.data_retorno} onChange={(e) => handleItemChange(index, e)} fullWidth InputLabelProps={{ shrink: true }}/></Grid>
+                  <Grid item xs={12} sm={12} md={2} sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    <Button variant="outlined" color="error" onClick={() => removerItem(index)} disabled={itens.length === 1} startIcon={<DeleteIcon />} fullWidth>
+                      Remover
+                    </Button>
+                  </Grid>
 
                 </Grid>
-              </Paper>
+                {index < itens.length - 1 && <Divider sx={{ my: 3, borderStyle: 'dashed' }} />}
+              </Box>
             ))}
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 4 }}>
-              <Button startIcon={<AddCircleOutlineIcon />} onClick={adicionarItem} variant="outlined" disabled={formLoading} >Adicionar Item</Button>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <Button variant="outlined" color="secondary" onClick={() => navigate('/cotacoes')} disabled={formLoading}>Cancelar</Button>
-                <Button type="submit" variant="contained" color="primary" size="large" disabled={formLoading} startIcon={formLoading ? <CircularProgress size={20} color="inherit" /> : null}>
-                  {formLoading ? 'Salvando...' : 'Salvar Cotação'}
-                </Button>
-              </Box>
+            <Box sx={{ mt: 2, mb: 4 }}>
+              <Button startIcon={<AddCircleOutlineIcon />} onClick={adicionarItem} variant="text" color="primary" disabled={formLoading}>
+                Adicionar Outro Item
+              </Button>
             </Box>
+
+            <Divider sx={{ my: 3 }} />
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+              <Button variant="outlined" color="secondary" onClick={() => navigate('/cotacoes')} disabled={formLoading}>
+                Cancelar / Voltar
+              </Button>
+              <Button type="submit" variant="contained" color="primary" disableElevation size="large" disabled={formLoading} startIcon={formLoading ? <CircularProgress size={20} color="inherit" /> : null}>
+                {formLoading ? 'Salvando...' : 'Salvar Cotação'}
+              </Button>
+            </Box>
+
           </Box>
         </Paper>
       </Container>

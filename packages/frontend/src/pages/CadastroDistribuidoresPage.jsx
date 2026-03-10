@@ -66,18 +66,25 @@ function CadastroDistribuidoresPage() {
 
   return (
     <>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+        <Paper elevation={2} sx={{ borderRadius: 2, p: 4 }}>
+          <Typography variant="h5" fontWeight="bold" gutterBottom>
             Cadastro de Novo Distribuidor
           </Typography>
-          <Divider sx={{ my: 2 }} />
+          
+          <Divider sx={{ my: 3 }} />
           
           <Box component="form" onSubmit={handleSubmit} noValidate>
+            
+            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+              Informações Básicas
+            </Typography>
+
             <Grid container spacing={3}>
               {/* --- DADOS PRINCIPAIS --- */}
-              <Grid item xs={12} md={8}>
+              <Grid item xs={12} md={6}>
                 <TextField
+                  variant="outlined"
                   name="nome"
                   label="Nome do Distribuidor"
                   value={formData.nome}
@@ -87,8 +94,9 @@ function CadastroDistribuidoresPage() {
                   autoFocus
                 />
               </Grid>
-              <Grid item xs={12} md={4}>
+              <Grid item xs={12} md={6}>
                 <TextField
+                  variant="outlined"
                   name="cnpj"
                   label="CNPJ"
                   value={formData.cnpj}
@@ -99,11 +107,14 @@ function CadastroDistribuidoresPage() {
 
               {/* --- DADOS DE CONTATO --- */}
               <Grid item xs={12}>
-                 <Divider sx={{ my: 1 }}><Typography variant="subtitle1">Informações de Contato</Typography></Divider>
+                 <Divider sx={{ my: 2 }}>
+                   <Typography variant="subtitle1" color="text.secondary">Informações de Contato</Typography>
+                 </Divider>
               </Grid>
 
               <Grid item xs={12} md={6}>
                 <TextField
+                  variant="outlined"
                   name="contato_nome"
                   label="Nome do Contato"
                   value={formData.contato_nome}
@@ -113,6 +124,7 @@ function CadastroDistribuidoresPage() {
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
+                  variant="outlined"
                   name="contato_email"
                   label="Email do Contato"
                   type="email"
@@ -123,6 +135,7 @@ function CadastroDistribuidoresPage() {
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField
+                  variant="outlined"
                   name="telefone"
                   label="Telefone"
                   value={formData.telefone}
@@ -132,21 +145,24 @@ function CadastroDistribuidoresPage() {
               </Grid>
             </Grid>
 
+            <Divider sx={{ my: 3 }} />
+
             {/* --- BOTÕES DE AÇÃO --- */}
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
               <Button 
                 variant="outlined" 
                 color="secondary" 
                 onClick={() => navigate('/distribuidores')} 
                 disabled={formLoading}
               >
-                Cancelar
+                Cancelar / Voltar
               </Button>
               <Button 
                 type="submit" 
                 variant="contained" 
                 color="primary" 
                 size="large" 
+                disableElevation
                 disabled={formLoading}
                 startIcon={formLoading ? <CircularProgress size={20} color="inherit" /> : null}
               >

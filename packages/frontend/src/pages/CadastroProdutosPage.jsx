@@ -60,16 +60,24 @@ function CadastroProdutosPage() {
 
   return (
     <>
-      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+        <Paper elevation={2} sx={{ borderRadius: 2, p: 4 }}>
+          <Typography variant="h5" fontWeight="bold" gutterBottom>
             Cadastro de Novo Produto
           </Typography>
-          <Divider sx={{ my: 2 }} />
+          
+          <Divider sx={{ my: 3 }} />
+
           <Box component="form" onSubmit={handleSubmit} noValidate>
+            
+            <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+              Informações do Produto
+            </Typography>
+
             <Grid container spacing={3}>
-              <Grid item xs={12}>
+              <Grid item xs={12} md={6}>
                 <TextField
+                  variant="outlined"
                   name="nome"
                   label="Nome do Produto"
                   value={formData.nome}
@@ -82,6 +90,18 @@ function CadastroProdutosPage() {
               
               <Grid item xs={12} md={6}>
                 <TextField
+                  variant="outlined"
+                  name="sku"
+                  label="SKU (Código de Referência)"
+                  value={formData.sku}
+                  onChange={handleChange}
+                  fullWidth
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  variant="outlined"
                   id="categoria-select"
                   name="categoria_id"
                   value={formData.categoria_id === null ? '' : formData.categoria_id}
@@ -89,8 +109,6 @@ function CadastroProdutosPage() {
                   label="Categoria"
                   fullWidth
                   select
-                  // Força uma largura mínima para o componente no estado inicial
-                  sx={{ minWidth: 220 }} 
                 >
                   {categoriasDisponiveis.map((cat) => (
                     <MenuItem key={cat.id} value={cat.id}>
@@ -100,18 +118,9 @@ function CadastroProdutosPage() {
                 </TextField>
               </Grid>
               
-              <Grid item xs={12} md={6}>
-                <TextField
-                  name="sku"
-                  label="SKU (Código de Referência)"
-                  value={formData.sku}
-                  onChange={handleChange}
-                  fullWidth
-                />
-              </Grid>
-              
               <Grid item xs={12}>
                 <TextField
+                  variant="outlined"
                   name="descricao"
                   label="Descrição do Produto"
                   value={formData.descricao}
@@ -123,20 +132,23 @@ function CadastroProdutosPage() {
               </Grid>
             </Grid>
 
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
+            <Divider sx={{ my: 3 }} />
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
               <Button 
                 variant="outlined" 
                 color="secondary" 
                 onClick={() => navigate('/produtos')} 
                 disabled={formLoading}
               >
-                Cancelar
+                Cancelar / Voltar
               </Button>
               <Button 
                 type="submit" 
                 variant="contained" 
                 color="primary" 
-                size="large" 
+                size="large"
+                disableElevation
                 disabled={formLoading}
                 startIcon={formLoading ? <CircularProgress size={20} color="inherit" /> : null}
               >
