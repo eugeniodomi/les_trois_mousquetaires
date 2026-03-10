@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
     await new Promise(resolve => setTimeout(resolve, 1000)); // Simula espera
     
     // Simula uma resposta de sucesso da API
-    const userData = { name: 'genio', email: email, token: 'aladin' };
+    const userData = { id: 1, name: 'genio', email: email, token: 'aladin' };
 
     // Guarda o usuário no localStorage e no estado
     localStorage.setItem('user', JSON.stringify(userData));

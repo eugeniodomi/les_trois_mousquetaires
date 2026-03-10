@@ -9,21 +9,24 @@ import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import ArticleIcon from '@mui/icons-material/Article';
 
 import { getHomeData } from '../services/dashboardService';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function HomePage() {
   const [data, setData] = useState(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     const loadData = async () => {
+      if (!user || !user.id) return;
       try {
-        const homeData = await getHomeData();
+        const homeData = await getHomeData(user.id);
         setData(homeData);
       } catch (err) {
         console.error("Failed to load home data", err);
       }
     };
     loadData();
-  }, []);
+  }, [user]);
 
   if (!data) {
     return <Typography>Carregando...</Typography>;
