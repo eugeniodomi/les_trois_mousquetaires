@@ -8,34 +8,19 @@ import QuoteList from '../components/dashboard/QuoteList';
 import HourglassTopIcon from '@mui/icons-material/HourglassTop';
 import ArticleIcon from '@mui/icons-material/Article';
 
-// --- SIMULAÇÃO DE DADOS DO BACKEND ---
-const fetchHomePageData = async () => {
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return {
-    stats: {
-      openQuotes: 8,
-      recentQuotesCount: 5,
-    },
-    openQuotesList: [
-      { id: 'COT-202545', name: 'Cotação de Rolamentos', distributor: 'Distribuidor A', date: '20/08/2025', status: 'Aberta' },
-      { id: 'COT-202542', name: 'Orçamento de Tintas', distributor: 'Fornecedor B', date: '18/08/2025', status: 'Aberta' },
-      // ... mais cotações abertas
-    ],
-    recentQuotesList: [
-      { id: 'COT-202548', name: 'Pedido de Compra #123', distributor: 'Distribuidor C', date: 'Hoje' },
-      { id: 'COT-202547', name: 'Verificação de Preço - SKU 554', distributor: 'Parceiro D', date: 'Ontem' },
-      // ... mais cotações recentes
-    ],
-  };
-};
+import { getHomeData } from '../services/dashboardService';
 
 export default function HomePage() {
   const [data, setData] = useState(null);
 
   useEffect(() => {
     const loadData = async () => {
-      const homeData = await fetchHomePageData();
-      setData(homeData);
+      try {
+        const homeData = await getHomeData();
+        setData(homeData);
+      } catch (err) {
+        console.error("Failed to load home data", err);
+      }
     };
     loadData();
   }, []);

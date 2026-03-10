@@ -69,6 +69,7 @@ function CadastroCotacaoPage() {
         setDistribuidores(uniqueDistribuidores);
         
       } catch (error) {
+        console.error("Erro ao carregar dados:", error);
         setPageError("Falha ao carregar dados essenciais. Verifique a conexão com a API e tente novamente.");
       } finally {
         setPageLoading(false);
@@ -109,7 +110,7 @@ function CadastroCotacaoPage() {
     setFormLoading(true);
     const payload = { ...cotacao, itens_cotacao: itens };
     try {
-      const response = await createQuotation(payload);
+      await createQuotation(payload);
       setNotification({ open: true, message: 'Cotação salva com sucesso!', severity: 'success' });
       setTimeout(() => navigate('/cotacoes'), 1500);
     } catch (error) {

@@ -1,0 +1,15 @@
+
+> frontend@0.0.0 lint
+> eslint .
+
+
+C:\Users\eugen\Desktop\All\Nova pasta (2)\les_trois_mousquetaires\packages\frontend\src\pages\RegisterPage.jsx
+  3:30  error  'useNavigate' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+C:\Users\eugen\Desktop\All\Nova pasta (2)\les_trois_mousquetaires\packages\frontend\src\services\productService.js
+  5:1  error  Irregular whitespace not allowed  no-irregular-whitespace
+  6:1  error  Irregular whitespace not allowed  no-irregular-whitespace
+  7:1  error  Irregular whitespace not allowed  no-irregular-whitespace
+
+Ô£û 4 problems (4 errors, 0 warnings)
+

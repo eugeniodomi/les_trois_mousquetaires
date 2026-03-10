@@ -12,6 +12,7 @@ const productRoutes = require('./routes/product.routes.js');
 const quotationRoutes = require('./routes/quotation.routes.js'); 
 const distributorRoutes = require('./routes/distributor.routes.js');
 const searchRoutes = require('./routes/search.routes.js');
+const dashboardRoutes = require('./routes/dashboard.routes.js');
 const authRoutes = require('./routes/authRoutes.routes.js'); // Adicionado .js para consistência
 
 const admCotacoesRoutes = require('./routes/admCotacoes.routes.js');
@@ -47,6 +48,9 @@ app.use('/api/dados_cotacoes', quotationRoutes);
 
 // Rota de busca global
 app.use('/api/search', searchRoutes);
+
+// Rotas de dashboard
+app.use('/api/dashboard', dashboardRoutes);
 
 // Rota de autenticação com o limitador de requisições
 app.use('/api/auth', authLimiter, authRoutes);

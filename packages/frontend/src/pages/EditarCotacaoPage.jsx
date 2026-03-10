@@ -113,6 +113,7 @@ function EditarCotacaoPage() {
       descricao: cotacao.descricao,
       usuario_criador_id: cotacao.usuario_criador_id,
       status: cotacao.status,
+      // eslint-disable-next-line no-unused-vars
       itens_cotacao: itens.map(({ tempId, ...item }) => item)
     };
 
