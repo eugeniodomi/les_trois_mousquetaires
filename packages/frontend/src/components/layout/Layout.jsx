@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import UserMenu from './UserMenu';
-import { styled } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import { Box, Drawer as MuiDrawer, AppBar as MuiAppBar, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, IconButton, CssBaseline, Collapse } from '@mui/material';
+import { ColorModeContext } from '../../config/theme';
 
 // Ícones
 import MenuIcon from '@mui/icons-material/Menu';
@@ -17,6 +18,8 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import PostAddIcon from '@mui/icons-material/PostAdd';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
 
 const drawerWidth = 240;
 
@@ -44,6 +47,7 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
       position: 'relative',
       whiteSpace: 'nowrap',
       width: drawerWidth,
+      backgroundColor: theme.palette.background.paper,
       transition: theme.transitions.create('width', {
         easing: theme.transitions.easing.sharp,
         duration: theme.transitions.duration.enteringScreen,
@@ -66,6 +70,9 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 
 
 export default function Layout() {
+  const theme = useTheme();
+  const colorMode = React.useContext(ColorModeContext);
+
   const [open, setOpen] = useState(true);
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
   const [produtosOpen, setProdutosOpen] = useState(false);
@@ -99,6 +106,9 @@ export default function Layout() {
           <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
             Site em Progresso..
           </Typography>
+          <IconButton sx={{ ml: 1, mr: 2 }} onClick={colorMode.toggleColorMode} color="inherit">
+            {theme.palette.mode === 'dark' ? <Brightness7Icon /> : <Brightness4Icon />}
+          </IconButton>
           <UserMenu />
         </Toolbar>
       </AppBar>
