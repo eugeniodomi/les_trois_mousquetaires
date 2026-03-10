@@ -79,7 +79,7 @@ export default function DashboardsPage() {
       <Grid container spacing={4} sx={{ mb: 6 }}>
         {/* Pipeline Card */}
         <Grid item xs={12} md={4}>
-          <Card elevation={3} sx={{ height: '100%', borderLeft: 6, borderColor: 'primary.main' }}>
+          <Card elevation={3} sx={{ height: '100%', borderRadius: 2, borderLeft: 6, borderColor: 'primary.main' }}>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                 <Typography color="textSecondary" variant="h6" gutterBottom>
@@ -99,7 +99,7 @@ export default function DashboardsPage() {
 
         {/* Win Rate Card */}
         <Grid item xs={12} md={4}>
-          <Card elevation={3} sx={{ height: '100%', borderLeft: 6, borderColor: 'success.main' }}>
+          <Card elevation={3} sx={{ height: '100%', borderRadius: 2, borderLeft: 6, borderColor: 'success.main' }}>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                 <Typography color="textSecondary" variant="h6" gutterBottom>
@@ -119,7 +119,7 @@ export default function DashboardsPage() {
 
         {/* Gross Margin Card */}
         <Grid item xs={12} md={4}>
-          <Card elevation={3} sx={{ height: '100%', borderLeft: 6, borderColor: 'warning.main' }}>
+          <Card elevation={3} sx={{ height: '100%', borderRadius: 2, borderLeft: 6, borderColor: 'warning.main' }}>
             <CardContent>
               <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
                 <Typography color="textSecondary" variant="h6" gutterBottom>
