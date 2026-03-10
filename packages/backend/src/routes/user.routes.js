@@ -3,8 +3,57 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
 
+// ROTA PARA BUSCAR O LAYOUT DO DASHBOARD
+// GET /api/usuarios/layout
+router.get('/layout', async (req, res) => {
+  try {
+    // Assuming user ID is coming from req.user set by authentication middleware.
+    // However, looking at the PUT /:id route, authentication middleware isn't present in this file.
+    // If there's no req.user, we might need to rely on query parameters or headers if auth isn't standard.
+    // Wait, the user mentioned "fetch the logged-in user's layout". Let's check how HomePage was fetching data.
+    // It calls `getHomeData(user.id)`. The frontend has the user ID.
+    // Let's expect the user ID as a query param or body for now, OR better, define it as `/layout/:id` or expect it in query: `/layout?userId=xxx`
+    // Let's define the route as GET /layout/:id to be safe and consistent, OR we can use the requested GET /api/usuarios/layout and expect `userId` in query string.
+    
+    // User requested "GET /api/usuarios/layout (to fetch the logged-in user's layout)."
+    // We will extract userId from req.query.userId.
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).json({ msg: 'User ID is required' });
+    }
+
+    const result = await pool.query('SELECT dashboard_layout FROM usuarios WHERE id = $1', [userId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ msg: 'User not found.' });
+    }
+
+    res.json({ layout: result.rows[0].dashboard_layout });
+  } catch (err) {
+    console.error('Error fetching layout:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
+// ROTA PARA SALVAR O LAYOUT DO DASHBOARD
+// PUT /api/usuarios/layout
+router.put('/layout', async (req, res) => {
+  try {
+    const { userId, layout } = req.body;
+    if (!userId) {
+      return res.status(400).json({ msg: 'User ID is required' });
+    }
+
+    await pool.query('UPDATE usuarios SET dashboard_layout = $1 WHERE id = $2', [JSON.stringify(layout), userId]);
+
+    res.json({ msg: 'Layout saved successfully' });
+  } catch (err) {
+    console.error('Error saving layout:', err.message);
+    res.status(500).send('Server Error');
+  }
+});
+
 // ROTA DE ATUALIZAÇÃO DO PERFIL DO USUÁRIO
-// PUT /api/users/:id
+// PUT /api/usuarios/:id
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const { nome, email, cargo, foto_url, novaSenha } = req.body;
