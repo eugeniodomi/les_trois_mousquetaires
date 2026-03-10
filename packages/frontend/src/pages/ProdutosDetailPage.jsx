@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography, Paper, CircularProgress, Button, Grid, Divider } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
@@ -14,6 +14,7 @@ const COLORS = ['#1976d2', '#dc004e', '#388e3c', '#f57c00', '#9c27b0', '#0288d1'
 export default function ProdutosDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -184,7 +185,7 @@ export default function ProdutosDetailPage() {
                             // Extrair o id da cotação mapeado dinamicamente para este distribuidor
                             const cotacaoId = payload.payload[`${distName}_cotacao_id`];
                             if (cotacaoId) {
-                                navigate(`/cotacoes/${cotacaoId}`);
+                                navigate(`/cotacoes/${cotacaoId}`, { state: { from: location.pathname } });
                             }
                           },
                           cursor: 'pointer'

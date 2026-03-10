@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Box, 
   Typography, 
@@ -38,6 +38,7 @@ const formatDateTime = (dateString) => {
 export default function CotacaoDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [quote, setQuote] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -86,10 +87,10 @@ export default function CotacaoDetailPage() {
             <Button
                 variant="outlined"
                 startIcon={<ArrowBackIcon />}
-                onClick={() => navigate('/cotacoes')}
+                onClick={() => navigate(location.state?.from || '/cotacoes')}
                 sx={{ mt: 2 }}
             >
-                Voltar para a Lista
+                Voltar
             </Button>
         </Box>
     );
@@ -105,9 +106,9 @@ export default function CotacaoDetailPage() {
         <Button
           variant="outlined"
           startIcon={<ArrowBackIcon />}
-          onClick={() => navigate('/cotacoes')}
+          onClick={() => navigate(location.state?.from || '/cotacoes')}
         >
-          Voltar para a Lista
+          Voltar
         </Button>
         
         <Button
