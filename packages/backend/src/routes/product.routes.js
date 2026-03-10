@@ -11,6 +11,9 @@ router.get('/', productController.findAll);
 // A rota estática '/search' DEVE vir antes da rota dinâmica '/:id' para evitar conflitos.
 router.get('/search', productController.search);
 
+// Rota para BUSCAR analytics dos produtos (DASHBOARD)
+router.get('/analytics', productController.getAnalytics);
+
 // Rota para CRIAR um novo produto
 router.post('/', productController.create);
 

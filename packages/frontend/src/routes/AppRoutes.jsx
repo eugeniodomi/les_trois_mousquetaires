@@ -22,10 +22,12 @@ import EditarCotacaoPage from '../pages/EditarCotacaoPage';
 import CadastroDistribuidoresPage from '../pages/CadastroDistribuidoresPage';
 import DistribuidorDetailPage from '../pages/DistribuidorDetailPage';
 import EditarDistribuidorPage from '../pages/EditarDistribuidorPage';
+import DistributorAnalytics from '../pages/DistributorAnalytics';
 
 
 import ProdutosDetailPage from '../pages/ProdutosDetailPage';
 import EditarProdutoPage from '../pages/EditarProdutoPage';
+import ProductAnalytics from '../pages/ProductAnalytics';
 
 
 // 👇 1. IMPORTE A NOVA PÁGINA DE CADASTRO DE PRODUTO
@@ -48,6 +50,7 @@ export default function AppRoutes() {
           {/* --- ROTAS DE DISTRIBUIDORES --- */}
           <Route path="distribuidores">
             <Route index element={<DistribuidoresPage />} />
+            <Route path="analytics" element={<DistributorAnalytics />} />
             <Route path="novo" element={<CadastroDistribuidoresPage />} />
             <Route path=":id" element={<DistribuidorDetailPage />} />
             <Route path=":id/editar" element={<EditarDistribuidorPage />} />
@@ -65,6 +68,7 @@ export default function AppRoutes() {
           {/* --- ROTAS DE PRODUTOS --- */}
           <Route path="produtos">
             <Route index element={<ProdutosPage />} />
+            <Route path="analytics" element={<ProductAnalytics />} />
             <Route path="novo" element={<CadastroProdutosPage />} />
             <Route path=":id" element={<ProdutosDetailPage />} />
             <Route path=":id/editar" element={<EditarProdutoPage />} />

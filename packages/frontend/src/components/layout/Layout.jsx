@@ -68,6 +68,8 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 export default function Layout() {
   const [open, setOpen] = useState(true);
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
+  const [produtosOpen, setProdutosOpen] = useState(false);
+  const [distribuidoresOpen, setDistribuidoresOpen] = useState(false);
 
   const handleDrawerToggle = () => {
     setOpen(!open);
@@ -134,14 +136,44 @@ export default function Layout() {
             <ListItemIcon><RequestQuoteIcon /></ListItemIcon>
             <ListItemText primary="Cotações" />
           </ListItemButton>
-          <ListItemButton component={Link} to="/produtos">
+
+          {/* MENUS COLAPSÁVEIS - PRODUTOS */}
+          <ListItemButton onClick={() => setProdutosOpen(!produtosOpen)}>
             <ListItemIcon><InventoryIcon /></ListItemIcon>
             <ListItemText primary="Produtos" />
+            {produtosOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
-          <ListItemButton component={Link} to="/distribuidores">
+          <Collapse in={produtosOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItemButton component={Link} to="/produtos" sx={{ pl: 4 }}>
+                <ListItemIcon><InventoryIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Lista de Produtos" />
+              </ListItemButton>
+              <ListItemButton component={Link} to="/produtos/analytics" sx={{ pl: 4 }}>
+                <ListItemIcon><BarChartIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Análise de Produtos" />
+              </ListItemButton>
+            </List>
+          </Collapse>
+
+          {/* MENUS COLAPSÁVEIS - DISTRIBUIDORES */}
+          <ListItemButton onClick={() => setDistribuidoresOpen(!distribuidoresOpen)}>
             <ListItemIcon><GroupIcon /></ListItemIcon>
             <ListItemText primary="Distribuidores" />
+            {distribuidoresOpen ? <ExpandLess /> : <ExpandMore />}
           </ListItemButton>
+          <Collapse in={distribuidoresOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              <ListItemButton component={Link} to="/distribuidores" sx={{ pl: 4 }}>
+                <ListItemIcon><GroupIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Lista de Dist." />
+              </ListItemButton>
+              <ListItemButton component={Link} to="/distribuidores/analytics" sx={{ pl: 4 }}>
+                <ListItemIcon><BarChartIcon fontSize="small" /></ListItemIcon>
+                <ListItemText primary="Análise de Dist." />
+              </ListItemButton>
+            </List>
+          </Collapse>
 
           {/* NOVO ITEM DE MENU "CADASTROS" */}
           <ListItemButton onClick={handleCadastrosClick}>

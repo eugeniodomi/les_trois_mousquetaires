@@ -195,3 +195,42 @@ exports.getHistory = async (req, res) => {
     res.status(500).send('Erro no servidor ao buscar histórico de preços');
   }
 };
+
+// Buscar analytics para o dashboard de produtos
+exports.getAnalytics = async (req, res) => {
+  try {
+    // 1. Top 5 Produtos mais Cotados (por quantidade de vezes que aparecem em cotações)
+    const topQuotedQuery = `
+      SELECT 
+        p.nome as product_name,
+        COUNT(dc.id) as quote_count
+      FROM produtos p
+      LEFT JOIN dados_cotacoes dc ON p.id = dc.produto_id
+      GROUP BY p.id, p.nome
+      ORDER BY quote_count DESC
+      LIMIT 5
+    `;
+    const topQuotedResult = await pool.query(topQuotedQuery);
+
+    // 2. Top 5 Produtos gerando mais receita
+    const topRevenueQuery = `
+      SELECT 
+        p.nome as product_name,
+        COALESCE(SUM(dc.valor_venda_final * dc.quantidade), 0) as total_revenue
+      FROM produtos p
+      LEFT JOIN dados_cotacoes dc ON p.id = dc.produto_id
+      GROUP BY p.id, p.nome
+      ORDER BY total_revenue DESC
+      LIMIT 5
+    `;
+    const topRevenueResult = await pool.query(topRevenueQuery);
+
+    res.json({
+      topQuoted: topQuotedResult.rows,
+      topRevenue: topRevenueResult.rows
+    });
+  } catch (err) {
+    console.error("Erro ao buscar analytics de produtos:", err.message);
+    res.status(500).send('Erro no servidor ao buscar analytics');
+  }
+};

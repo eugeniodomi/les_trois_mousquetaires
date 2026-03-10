@@ -141,3 +141,46 @@ exports.delete = async (req, res) => {
         res.status(500).json({ message: "Não foi possível desativar o distribuidor com id=" + req.params.id });
     }
 };
+
+// Buscar analytics para o dashboard de distribuidores
+exports.getAnalytics = async (req, res) => {
+    try {
+        // 1. Competitividade do Distribuidor (Win rate / Frequência de vitórias)
+        // Como o status de ganho da cotação não está trivial, vamos rankear pela quantidade
+        // de itens ganhos / valor de negócio deles.
+        const winRateQuery = `
+            SELECT 
+                d.nome as distributor_name,
+                COUNT(DISTINCT c.id) as quotes_won
+            FROM distribuidores d
+            LEFT JOIN dados_cotacoes dc ON d.id = dc.distribuidor_id
+            LEFT JOIN cotacoes c ON dc.cotacao_id = c.id AND c.status = 'Fechada'
+            GROUP BY d.id, d.nome
+            ORDER BY quotes_won DESC
+            LIMIT 5
+        `;
+        const winRateResult = await pool.query(winRateQuery);
+
+        // 2. Volume de negócios por distribuidor (Soma de valor_venda_final em cotações)
+        const volumeQuery = `
+            SELECT 
+                d.nome as distributor_name,
+                COALESCE(SUM(dc.valor_venda_final * dc.quantidade), 0) as total_volume
+            FROM distribuidores d
+            LEFT JOIN dados_cotacoes dc ON d.id = dc.distribuidor_id
+            LEFT JOIN cotacoes c ON dc.cotacao_id = c.id
+            GROUP BY d.id, d.nome
+            ORDER BY total_volume DESC
+            LIMIT 5
+        `;
+        const volumeResult = await pool.query(volumeQuery);
+
+        res.json({
+            winRates: winRateResult.rows,
+            volumes: volumeResult.rows
+        });
+    } catch (error) {
+        console.error("Erro ao buscar analytics de distribuidores:", error.message);
+        res.status(500).json({ message: "Erro no servidor ao buscar analytics de distribuidores." });
+    }
+};

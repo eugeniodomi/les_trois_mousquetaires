@@ -8,9 +8,13 @@ const distributorController = require('../controllers/distributor.controller.js'
 // Exemplo: POST /api/distribuidores
 router.post('/', distributorController.create);
 
-// Rota para LISTAR TODOS os distribuidores
+// Rota para BUSCAR todos os distribuidores
 // Exemplo: GET /api/distribuidores
 router.get('/', distributorController.findAll);
+
+// Rota para BUSCAR analytics (DASHBOARD)
+// Exemplo: GET /api/distribuidores/analytics
+router.get('/analytics', distributorController.getAnalytics);
 
 // Rota para BUSCAR um distribuidor específico pelo ID
 // Exemplo: GET /api/distribuidores/1
