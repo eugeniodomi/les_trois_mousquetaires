@@ -92,3 +92,21 @@ export const updateProduct = async (id, productData) => {
     throw error;
   }
 };
+
+/**
+ * Busca o histórico de preços de um produto.
+ * @param {string|number} id - O ID do produto.
+ * @returns {Promise<Array>} O histórico de preços.
+ */
+export const getProductHistory = async (id) => {
+  try {
+    const response = await fetch(`${API_PRODUCTS_URL}/${id}/historico`);
+    if (!response.ok) {
+      throw new Error('Não foi possível buscar o histórico do produto.');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(`Falha ao buscar histórico do produto com ID ${id}:`, error);
+    throw error;
+  }
+};

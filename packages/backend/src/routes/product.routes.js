@@ -18,6 +18,9 @@ router.post('/', productController.create);
 // --- ROTAS DINÂMICAS (com parâmetro :id) ---
 // Todas as rotas que usam um ID específico devem vir depois das rotas estáticas.
 
+// Rota para BUSCAR o histórico de preços de um produto
+router.get('/:id/historico', productController.getHistory);
+
 // Rota para BUSCAR um produto por ID
 router.get('/:id', productController.findById);
 

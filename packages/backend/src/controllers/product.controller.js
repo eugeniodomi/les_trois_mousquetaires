@@ -161,3 +161,36 @@ exports.search = async (req, res) => {
     res.status(500).send('Erro no servidor');
   }
 };
+
+// Busca o histórico de preços do produto
+exports.getHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Consulta para buscar as cotações onde este produto aparece
+    const query = `
+      SELECT 
+        dc.valor_unitario AS price,
+        c.data_criacao AS date,
+        d.nome AS "distributorName"
+      FROM dados_cotacoes dc
+      JOIN cotacoes c ON dc.cotacao_id = c.id
+      JOIN distribuidores d ON dc.distribuidor_id = d.id
+      WHERE dc.produto_id = $1
+      ORDER BY c.data_criacao ASC
+    `;
+    
+    const { rows } = await pool.query(query, [id]);
+    
+    // Formatar os dados se necessário (ex: converter numeric para float)
+    const formattedRows = rows.map(r => ({
+      ...r,
+      price: parseFloat(r.price)
+    }));
+    
+    res.json(formattedRows);
+  } catch (err) {
+    console.error("Erro ao buscar histórico de preços:", err.message);
+    res.status(500).send('Erro no servidor ao buscar histórico de preços');
+  }
+};

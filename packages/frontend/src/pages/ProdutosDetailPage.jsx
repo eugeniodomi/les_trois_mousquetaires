@@ -5,7 +5,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 
 // Importe o serviço para buscar um produto por ID
-import { getProductById } from '../services/productService';
+import { getProductById, getProductHistory } from '../services/productService';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function ProdutosDetailPage() {
   const { id } = useParams();
@@ -13,6 +14,7 @@ export default function ProdutosDetailPage() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [historyData, setHistoryData] = useState([]);
 
   useEffect(() => {
     const loadProductDetails = async () => {
@@ -21,6 +23,13 @@ export default function ProdutosDetailPage() {
       try {
         const data = await getProductById(id);
         setProduct(data);
+        
+        try {
+          const history = await getProductHistory(id);
+          setHistoryData(history);
+        } catch (historyErr) {
+          console.warn('Não foi possível carregar o histórico:', historyErr);
+        }
       } catch (err) {
         setError(err.message || 'Ocorreu um erro ao buscar os detalhes do produto.');
       } finally {
@@ -98,6 +107,47 @@ export default function ProdutosDetailPage() {
             <Typography sx={{ whiteSpace: 'pre-wrap' }}>{product.descricao || 'Nenhuma descrição fornecida.'}</Typography>
           </Grid>
         </Grid>
+
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h6" gutterBottom>
+            Histórico de Preços
+          </Typography>
+          {historyData && historyData.length > 0 ? (
+            <Box sx={{ width: '100%', height: 300, mt: 2 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={historyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="date" 
+                    tickFormatter={(tick) => {
+                      const d = new Date(tick);
+                      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                    }}
+                  />
+                  <YAxis 
+                    tickFormatter={(tick) => `R$ ${Number(tick).toFixed(2)}`}
+                    domain={['auto', 'auto']}
+                  />
+                  <Tooltip 
+                    formatter={(value, name, props) => {
+                      const distributor = props.payload.distributorName;
+                      return [`R$ ${Number(value).toFixed(2)}${distributor ? ` (${distributor})` : ''}`, 'Valor Unitário'];
+                    }}
+                    labelFormatter={(label) => {
+                      const d = new Date(label);
+                      return d.toLocaleDateString('pt-BR');
+                    }}
+                  />
+                  <Line type="monotone" dataKey="price" stroke="#1976d2" activeDot={{ r: 8 }} name="Valor" />
+                </LineChart>
+              </ResponsiveContainer>
+            </Box>
+          ) : (
+            <Typography variant="body1" color="text.secondary" sx={{ mt: 2, fontStyle: 'italic' }}>
+              Não há histórico de preços suficiente para este produto.
+            </Typography>
+          )}
+        </Box>
       </Paper>
     </Box>
   );
