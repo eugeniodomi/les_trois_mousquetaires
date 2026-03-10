@@ -1,0 +1,42 @@
+[
+  {
+    "column_name": "id",
+    "data_type": "integer",
+    "column_default": "nextval('usuarios_id_seq'::regclass)"
+  },
+  {
+    "column_name": "nome",
+    "data_type": "character varying",
+    "column_default": null
+  },
+  {
+    "column_name": "email",
+    "data_type": "character varying",
+    "column_default": null
+  },
+  {
+    "column_name": "senha_hash",
+    "data_type": "character varying",
+    "column_default": null
+  },
+  {
+    "column_name": "data_criacao",
+    "data_type": "timestamp with time zone",
+    "column_default": "now()"
+  },
+  {
+    "column_name": "nivel_acesso",
+    "data_type": "character varying",
+    "column_default": "'usuario'::character varying"
+  },
+  {
+    "column_name": "status",
+    "data_type": "character varying",
+    "column_default": "'pendente'::character varying"
+  },
+  {
+    "column_name": "ultimo_login",
+    "data_type": "timestamp with time zone",
+    "column_default": null
+  }
+]

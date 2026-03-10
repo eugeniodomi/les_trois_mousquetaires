@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
+import UserMenu from './UserMenu';
 import { styled } from '@mui/material/styles';
 import { Box, Drawer as MuiDrawer, AppBar as MuiAppBar, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, IconButton, CssBaseline, Collapse } from '@mui/material';
 
@@ -96,6 +97,7 @@ export default function Layout() {
           <Typography component="h1" variant="h6" color="inherit" noWrap sx={{ flexGrow: 1 }}>
             Site em Progresso..
           </Typography>
+          <UserMenu />
         </Toolbar>
       </AppBar>
 

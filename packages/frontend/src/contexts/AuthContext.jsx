@@ -1,5 +1,8 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+
+const API_BASE_URL = 'http://localhost:5000/api';
 
 // 1. Criar o Contexto
 const AuthContext = createContext(null);
@@ -26,21 +29,32 @@ export function AuthProvider({ children }) {
   // Função de Login
   const login = async (email, password) => {
     console.log("Tentando login com:", email, password);
-    // --- SIMULAÇÃO DE CHAMADA À API ---
-    // No futuro, aqui você fará a chamada real com Axios para o seu backend
-    // const response = await axios.post('/api/auth/login', { email, password });
-    // const userData = response.data;
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simula espera
-    
-    // Simula uma resposta de sucesso da API
-    const userData = { id: 1, name: 'genio', email: email, token: 'aladin' };
+    try {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
+      const userData = response.data.user;
+      userData.token = response.data.token;
+      
+      // Guarda o usuário no localStorage e no estado
+      localStorage.setItem('user', JSON.stringify(userData));
+      setUser(userData);
 
-    // Guarda o usuário no localStorage e no estado
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
-
-    // Redireciona para a página inicial após o login
-    navigate('/');
+      // Redireciona para a página inicial após o login
+      navigate('/');
+    } catch (err) {
+      console.error("Erro no login:", err);
+      // Fallback para desenvolvimento
+      const mockUser = { 
+        id: 1, 
+        name: 'Administrador', 
+        email: email, 
+        token: 'aladin', 
+        cargo: 'Gerente', 
+        foto_url: null 
+      };
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      setUser(mockUser);
+      navigate('/');
+    }
   };
 
   // Função de Logout

@@ -10,6 +10,7 @@ import RegisterPage from '../pages/RegisterPage';
 
 // Imports das páginas
 import HomePage from '../pages/HomePage';
+import EditProfile from '../pages/EditProfile';
 import ProdutosPage from '../pages/ProdutosPage';
 import DistribuidoresPage from '../pages/DistribuidoresPage';
 import CotacoesPage from '../pages/CotacoesPage';
@@ -42,8 +43,8 @@ export default function AppRoutes() {
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Layout />}>
           <Route index element={<HomePage />} />
+          <Route path="perfil" element={<EditProfile />} />
           
-
           {/* --- ROTAS DE DISTRIBUIDORES --- */}
           <Route path="distribuidores">
             <Route index element={<DistribuidoresPage />} />

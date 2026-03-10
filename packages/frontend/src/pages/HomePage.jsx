@@ -39,7 +39,7 @@ export default function HomePage() {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        Página Inicial
+        Bem-vindo(a), {user ? user.name || user.nome : 'Visitante'}
       </Typography>
       
       {/* Barra de Pesquisa */}

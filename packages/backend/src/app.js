@@ -15,6 +15,7 @@ const searchRoutes = require('./routes/search.routes.js');
 const dashboardRoutes = require('./routes/dashboard.routes.js');
 const globalDashboardRoutes = require('./routes/globalDashboard.routes.js');
 const authRoutes = require('./routes/authRoutes.routes.js'); // Adicionado .js para consistência
+const userRoutes = require('./routes/user.routes.js');
 
 const admCotacoesRoutes = require('./routes/admCotacoes.routes.js');
 
@@ -56,6 +57,9 @@ app.use('/api/global-dashboard', globalDashboardRoutes);
 
 // Rota de autenticação com o limitador de requisições
 app.use('/api/auth', authLimiter, authRoutes);
+
+// Rotas de usuários
+app.use('/api/users', userRoutes);
 
 // A URL da API continua a mesma, pois representa o recurso "cotacoes",
 app.use('/api/cotacoes', admCotacoesRoutes);

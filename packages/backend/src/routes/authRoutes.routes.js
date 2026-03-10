@@ -27,7 +27,7 @@ router.post('/register', async (req, res) => {
 
     // 4. Insere o novo usuário no banco de dados
     const newUser = await pool.query(
-      'INSERT INTO usuarios (nome, email, senha_hash) VALUES ($1, $2, $3) RETURNING id, nome, email',
+      'INSERT INTO usuarios (nome, email, senha_hash) VALUES ($1, $2, $3) RETURNING id, nome, email, cargo, foto_url',
       [name, email, passwordHash]
     );
 
@@ -71,6 +71,9 @@ router.post('/login', async (req, res) => {
       user: {
         id: user.id,
         name: user.nome,
+        email: user.email,
+        cargo: user.cargo,
+        foto_url: user.foto_url
       },
     };
 
@@ -81,7 +84,16 @@ router.post('/login', async (req, res) => {
       { expiresIn: '1h' }, // Token expira em 1 hora
       (err, token) => {
         if (err) throw err;
-        res.json({ token }); // Envia o token para o frontend
+        res.json({ 
+          token, 
+          user: { 
+            id: user.id, 
+            nome: user.nome, 
+            email: user.email, 
+            cargo: user.cargo, 
+            foto_url: user.foto_url 
+          } 
+        }); // Envia o token e os dados do usuário para o frontend
       }
     );
 
