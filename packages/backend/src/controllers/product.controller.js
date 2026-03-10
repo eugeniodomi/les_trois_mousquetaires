@@ -172,7 +172,8 @@ exports.getHistory = async (req, res) => {
       SELECT 
         dc.valor_unitario AS price,
         c.data_criacao AS date,
-        d.nome AS "distributorName"
+        d.nome AS "distributorName",
+        c.id AS cotacao_id
       FROM dados_cotacoes dc
       JOIN cotacoes c ON dc.cotacao_id = c.id
       JOIN distribuidores d ON dc.distribuidor_id = d.id

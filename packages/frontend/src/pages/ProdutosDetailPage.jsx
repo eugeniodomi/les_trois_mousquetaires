@@ -6,7 +6,10 @@ import EditIcon from '@mui/icons-material/Edit';
 
 // Importe o serviço para buscar um produto por ID
 import { getProductById, getProductHistory } from '../services/productService';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+
+// Paleta de cores para os distribuidores
+const COLORS = ['#1976d2', '#dc004e', '#388e3c', '#f57c00', '#9c27b0', '#0288d1', '#c0ca33', '#795548', '#607d8b'];
 
 export default function ProdutosDetailPage() {
   const { id } = useParams();
@@ -15,6 +18,7 @@ export default function ProdutosDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [historyData, setHistoryData] = useState([]);
+  const [distributors, setDistributors] = useState([]);
 
   useEffect(() => {
     const loadProductDetails = async () => {
@@ -26,7 +30,33 @@ export default function ProdutosDetailPage() {
         
         try {
           const history = await getProductHistory(id);
-          setHistoryData(history);
+          
+          // Processar os dados para o gráfico interativo com múltiplas linhas
+          const processedDataMap = {};
+          const uniqueDistributors = new Set();
+
+          history.forEach(item => {
+            const dateKey = item.date;
+            const distName = item.distributorName;
+            
+            // Adicionar ao Set de distribuidores únicos
+            uniqueDistributors.add(distName);
+
+            if (!processedDataMap[dateKey]) {
+              processedDataMap[dateKey] = { date: dateKey };
+            }
+            
+            // Armazenar o preço para aquele distribuidor na data
+            processedDataMap[dateKey][distName] = item.price;
+            // Armazenar o id da cotação para o clique
+            processedDataMap[dateKey][`${distName}_cotacao_id`] = item.cotacao_id;
+          });
+
+          // Converter o map em array e ordenar por data
+          const chartData = Object.values(processedDataMap).sort((a, b) => new Date(a.date) - new Date(b.date));
+          
+          setDistributors(Array.from(uniqueDistributors));
+          setHistoryData(chartData);
         } catch (historyErr) {
           console.warn('Não foi possível carregar o histórico:', historyErr);
         }
@@ -113,34 +143,57 @@ export default function ProdutosDetailPage() {
             Histórico de Preços
           </Typography>
           {historyData && historyData.length > 0 ? (
-            <Box sx={{ width: '100%', height: 300, mt: 2 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={historyData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
-                    tickFormatter={(tick) => {
-                      const d = new Date(tick);
-                      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-                    }}
-                  />
-                  <YAxis 
-                    tickFormatter={(tick) => `R$ ${Number(tick).toFixed(2)}`}
-                    domain={['auto', 'auto']}
-                  />
-                  <Tooltip 
-                    formatter={(value, name, props) => {
-                      const distributor = props.payload.distributorName;
-                      return [`R$ ${Number(value).toFixed(2)}${distributor ? ` (${distributor})` : ''}`, 'Valor Unitário'];
-                    }}
-                    labelFormatter={(label) => {
-                      const d = new Date(label);
-                      return d.toLocaleDateString('pt-BR');
-                    }}
-                  />
-                  <Line type="monotone" dataKey="price" stroke="#1976d2" activeDot={{ r: 8 }} name="Valor" />
-                </LineChart>
-              </ResponsiveContainer>
+            <Box>
+              <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', mb: 2, display: 'block' }}>
+                💡 Dica: Passe o rato sobre os pontos para ver os valores e clique numa bolinha para abrir a cotação completa.
+              </Typography>
+              <Box sx={{ width: '100%', height: 350, mt: 1 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={historyData} margin={{ top: 5, right: 30, bottom: 5, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="date" 
+                      tickFormatter={(tick) => {
+                        const d = new Date(tick);
+                        return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+                      }}
+                    />
+                    <YAxis 
+                      tickFormatter={(tick) => `R$ ${Number(tick).toFixed(2)}`}
+                      domain={['auto', 'auto']}
+                    />
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        return [`R$ ${Number(value).toFixed(2)}`, name];
+                      }}
+                      labelFormatter={(label) => {
+                        const d = new Date(label);
+                        return d.toLocaleDateString('pt-BR');
+                      }}
+                    />
+                    <Legend layout="vertical" verticalAlign="middle" align="right" />
+                    {distributors.map((distName, index) => (
+                      <Line 
+                        key={distName}
+                        type="monotone" 
+                        dataKey={distName} 
+                        stroke={COLORS[index % COLORS.length]} 
+                        activeDot={{ 
+                          r: 8, 
+                          onClick: (e, payload) => {
+                            // Extrair o id da cotação mapeado dinamicamente para este distribuidor
+                            const cotacaoId = payload.payload[`${distName}_cotacao_id`];
+                            if (cotacaoId) {
+                                navigate(`/cotacoes/${cotacaoId}`);
+                            }
+                          },
+                          cursor: 'pointer'
+                        }} 
+                      />
+                    ))}
+                  </LineChart>
+                </ResponsiveContainer>
+              </Box>
             </Box>
           ) : (
             <Typography variant="body1" color="text.secondary" sx={{ mt: 2, fontStyle: 'italic' }}>
