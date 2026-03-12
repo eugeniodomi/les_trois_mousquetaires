@@ -7,16 +7,23 @@ const pool = require('../config/database');
  * @description Cria uma nova Cotação Mestre e todos os seus itens associados
  * dentro de uma única transação para garantir a integridade dos dados.
  */
-exports.create = async (req, res) => {
-    console.log("Backend recebeu para criação:", req.body); // Log para depuração
+// Helper: preserva 0 intencionalmente; só converte undefined → null.
+// Usar `|| null` converteria 0 (Modo Rápido) em null, quebrando o contrato.
+const safeVal = (v) => (v === undefined ? null : v);
 
-    const { descricao, usuario_criador_id, itens_cotacao } = req.body;
+exports.create = async (req, res) => {
+    const { descricao, usuario_criador_id, status, itens_cotacao } = req.body;
+
+    console.log('[create] Payload recebido:', {
+        descricao, usuario_criador_id, status,
+        total_itens: Array.isArray(itens_cotacao) ? itens_cotacao.length : 'N/A',
+    });
 
     if (!descricao || !usuario_criador_id) {
-        return res.status(400).json({ message: "A descrição e o ID do usuário criador são obrigatórios." });
+        return res.status(400).json({ message: 'A descrição e o ID do usuário criador são obrigatórios.' });
     }
-    if (!itens_cotacao || !Array.isArray(itens_cotacao) || itens_cotacao.length === 0) {
-        return res.status(400).json({ message: "É necessário enviar pelo menos um item para a cotação." });
+    if (!Array.isArray(itens_cotacao) || itens_cotacao.length === 0) {
+        return res.status(400).json({ message: 'É necessário enviar pelo menos um item para a cotação.' });
     }
 
     const client = await pool.connect();
@@ -24,57 +31,64 @@ exports.create = async (req, res) => {
     try {
         await client.query('BEGIN');
 
+        // ── INSERT MESTRE — tabela `cotacoes` ─────────────────────────────
         const cotacaoQuery = `
             INSERT INTO cotacoes (descricao, usuario_criador_id, status, data_criacao)
-            VALUES ($1, $2, 'Aberta', NOW())
+            VALUES ($1, $2, $3, NOW())
             RETURNING id;
         `;
-        const cotacaoValues = [descricao, usuario_criador_id];
-        const cotacaoResult = await client.query(cotacaoQuery, cotacaoValues);
+        const cotacaoResult = await client.query(cotacaoQuery, [
+            descricao,
+            usuario_criador_id,
+            status || 'Aberta',
+        ]);
         const novaCotacaoId = cotacaoResult.rows[0].id;
+        console.log(`[create] Cotação mestre criada — ID: ${novaCotacaoId}`);
 
-        const itemPromises = itens_cotacao.map(item => {
-            // QUERY CORRIGIDA PARA INCLUIR data_cotacao
+        // ── INSERT DETALHE — tabela `dados_cotacoes` ──────────────────────
+        const itemPromises = itens_cotacao.map((item, idx) => {
+            console.log(`[create] Inserindo item ${idx + 1}:`, item);
             const itemQuery = `
                 INSERT INTO dados_cotacoes (
-                    cotacao_id, produto_id, distribuidor_id, quantidade, valor_unitario,
-                    valor_cout, valor_osc, valor_venda_final, dolar_cotacao, 
-                    data_cotacao, -- <<< CAMPO ADICIONADO
-                    data_retorno,
+                    cotacao_id, produto_id, distribuidor_id, quantidade,
+                    valor_unitario, valor_cout, valor_osc, valor_venda_final,
+                    dolar_cotacao, data_cotacao, data_retorno,
                     data_registro, data_atualizacao
                 )
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW());
             `;
-            // VALORES CORRIGIDOS PARA INCLUIR item.data_cotacao
             const itemValues = [
-                novaCotacaoId,
-                item.produto_id,
-                item.distribuidor_id,
-                item.quantidade,
-                item.valor_unitario || null,
-                item.valor_cout || null,
-                item.valor_osc || null,
-                item.valor_venda_final || null,
-                item.dolar_cotacao || null,
-                item.data_cotacao || null, // <<< VALOR ADICIONADO
-                item.data_retorno || null
+                novaCotacaoId,                   // $1  cotacao_id (FK)
+                item.produto_id,                 // $2
+                item.distribuidor_id,             // $3
+                safeVal(item.quantidade),         // $4
+                safeVal(item.valor_unitario),     // $5
+                safeVal(item.valor_cout),         // $6
+                safeVal(item.valor_osc),          // $7
+                safeVal(item.valor_venda_final),  // $8 → 0 no Modo Rápido
+                safeVal(item.dolar_cotacao),      // $9 → 0 no Modo Rápido
+                safeVal(item.data_cotacao),       // $10
+                safeVal(item.data_retorno),       // $11 → null no Modo Rápido
             ];
             return client.query(itemQuery, itemValues);
         });
 
         await Promise.all(itemPromises);
         await client.query('COMMIT');
+        console.log(`[create] COMMIT OK — cotacao_id=${novaCotacaoId}`);
 
-        res.status(201).json({
-            message: "Cotação e seus itens criados com sucesso!",
-            cotacao_id: novaCotacaoId
+        return res.status(201).json({
+            message: 'Cotação e seus itens criados com sucesso!',
+            cotacao_id: novaCotacaoId,
         });
 
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error("ERRO NA TRANSAÇÃO DO BACKEND:", error);
-        res.status(500).json({ message: "Erro interno no servidor ao criar a cotação." });
-
+        console.error('[create] ROLLBACK — erro na transação:', error.message, error);
+        return res.status(500).json({
+            message: 'Erro interno no servidor ao criar a cotação.',
+            detail: error.message,
+        });
     } finally {
         client.release();
     }
@@ -244,10 +258,17 @@ exports.update = async (req, res) => {
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW());
             `;
             const itemValues = [
-                id, item.produto_id, item.distribuidor_id, item.quantidade,
-                item.valor_unitario || null, item.valor_cout || null, item.valor_osc || null,
-                item.valor_venda_final || null, item.dolar_cotacao || null,
-                item.data_cotacao || null, item.data_retorno || null
+                id,
+                item.produto_id,
+                item.distribuidor_id,
+                safeVal(item.quantidade),
+                safeVal(item.valor_unitario),
+                safeVal(item.valor_cout),
+                safeVal(item.valor_osc),
+                safeVal(item.valor_venda_final),  // 0 no Modo Rápido
+                safeVal(item.dolar_cotacao),       // 0 no Modo Rápido
+                safeVal(item.data_cotacao),
+                safeVal(item.data_retorno),        // null no Modo Rápido
             ];
             return client.query(insertItemQuery, itemValues);
         });

@@ -13,21 +13,51 @@ import {
   TableCell, 
   TableContainer, 
   TableHead, 
-  TableRow 
+  TableRow,
+  Chip,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import { getQuotationById } from '../services/quotationService';
 
-// Funções auxiliares
+// ─── Helpers de exibição ──────────────────────────────────────────────────────
+
+/**
+ * Formata qualquer valor monetário.
+ * null/undefined → '—'   |   0 → 'R$ 0,00'   |   número → BRL
+ */
 const formatCurrency = (value) => {
-  if (value == null || isNaN(value)) return 'N/A';
+  if (value == null) return '—';
+  if (isNaN(Number(value))) return '—';
   return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
+/**
+ * Para campos secundários do Modo Rápido (valor_venda_final, dolar_cotacao):
+ * null/undefined → 'Não definido'   |   0 → 'Não definido'   |   outro → BRL
+ */
+const formatCurrencySecundaria = (value) => {
+  if (value == null || value === 0 || value === '0') return 'Não definido';
+  if (isNaN(Number(value))) return '—';
+  return Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+};
+
+/**
+ * Formata data comum. null/undefined → 'N/A'
+ */
 const formatDate = (dateString) => {
   if (!dateString) return 'N/A';
   return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR');
+};
+
+/**
+ * Para data_retorno: null → badge <Pendente>  |  data válida → formatada
+ */
+const BadgeDataRetorno = ({ value }) => {
+  if (!value) {
+    return <Chip label="Pendente" size="small" variant="outlined" color="warning" sx={{ fontWeight: 600 }} />;
+  }
+  return <>{new Date(value + 'T00:00:00').toLocaleDateString('pt-BR')}</>;
 };
 
 const formatDateTime = (dateString) => {
@@ -149,7 +179,10 @@ export default function CotacaoDetailPage() {
             <Typography><strong>Data de Criação:</strong> {formatDateTime(quote.data_criacao)}</Typography>
             <Typography><strong>Data de Fechamento:</strong> {formatDateTime(quote.data_fechamento)}</Typography>
             <Typography><strong>Data da Cotação (Item):</strong> {formatDate(quote.itens?.[0]?.data_cotacao)}</Typography>
-            <Typography><strong>Data de Retorno (Item):</strong> {formatDate(quote.itens?.[0]?.data_retorno)}</Typography>
+            <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <strong>Data de Retorno (Item):</strong>
+              <BadgeDataRetorno value={quote.itens?.[0]?.data_retorno} />
+            </Typography>
           </Grid>
         </Grid>
 
@@ -169,7 +202,26 @@ export default function CotacaoDetailPage() {
             <TableBody>
               {quote.itens?.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>{`${item.produto_nome || 'N/A'} (${item.produto_sku || 'N/A'})`}</TableCell><TableCell>{item.distribuidor_nome || 'N/A'}</TableCell><TableCell align="right">{item.quantidade}</TableCell><TableCell align="right">{formatCurrency(item.valor_unitario)}</TableCell><TableCell align="right">{formatCurrency(item.valor_cout)}</TableCell><TableCell align="right">{formatCurrency(item.valor_osc)}</TableCell><TableCell align="right">{formatCurrency(item.valor_venda_final)}</TableCell><TableCell align="right">{formatCurrency(item.dolar_cotacao)}</TableCell><TableCell align="right">{formatCurrency(item.quantidade * (item.valor_venda_final || item.valor_unitario || 0))}</TableCell><TableCell>{formatDate(item.data_cotacao)}</TableCell><TableCell>{formatDate(item.data_retorno)}</TableCell>
+                  <TableCell>{`${item.produto_nome || 'N/A'} (${item.produto_sku || 'N/A'})`}</TableCell>
+                  <TableCell>{item.distribuidor_nome || 'N/A'}</TableCell>
+                  <TableCell align="right">{item.quantidade}</TableCell>
+                  <TableCell align="right">{formatCurrency(item.valor_unitario)}</TableCell>
+                  <TableCell align="right">{formatCurrency(item.valor_cout)}</TableCell>
+                  <TableCell align="right">{formatCurrency(item.valor_osc)}</TableCell>
+                  {/* Campos secundários: 0 e null → 'Não definido' (Modo Rápido) */}
+                  <TableCell align="right" sx={{ color: (!item.valor_venda_final || item.valor_venda_final === 0) ? 'text.disabled' : 'inherit' }}>
+                    {formatCurrencySecundaria(item.valor_venda_final)}
+                  </TableCell>
+                  <TableCell align="right" sx={{ color: (!item.dolar_cotacao || item.dolar_cotacao === 0) ? 'text.disabled' : 'inherit' }}>
+                    {formatCurrencySecundaria(item.dolar_cotacao)}
+                  </TableCell>
+                  {/* Subtotal usa valor_unitario como fallback quando venda_final é 0/null */}
+                  <TableCell align="right">
+                    {formatCurrency(item.quantidade * (item.valor_venda_final || item.valor_unitario || 0))}
+                  </TableCell>
+                  <TableCell>{formatDate(item.data_cotacao)}</TableCell>
+                  {/* Data Retorno: null → badge Pendente */}
+                  <TableCell><BadgeDataRetorno value={item.data_retorno} /></TableCell>
                 </TableRow>
               ))}
             </TableBody>

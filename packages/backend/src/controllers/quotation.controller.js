@@ -7,16 +7,34 @@ const pool = require('../config/database');
  * @description Cria uma nova Cotação Mestre e todos os seus itens associados
  * dentro de uma única transação para garantir a integridade dos dados.
  */
+/**
+ * @description Cria uma nova Cotação Mestre e todos os seus itens associados
+ * dentro de uma única transação para garantir a integridade dos dados.
+ *
+ * Contrato do payload (frontend já sanitizou):
+ *   - Números ausentes chegam como 0   (não NaN / undefined)
+ *   - Datas ausentes chegam como null  (não string vazia "")
+ */
 exports.create = async (req, res) => {
-    console.log("Backend recebeu para criação:", req.body); // Log para depuração
+    const { descricao, usuario_criador_id, status, itens_cotacao } = req.body;
 
-    const { descricao, usuario_criador_id, itens_cotacao } = req.body;
+    console.log('[create] Payload recebido:', {
+        descricao,
+        usuario_criador_id,
+        status,
+        total_itens: Array.isArray(itens_cotacao) ? itens_cotacao.length : 'N/A',
+    });
 
+    // ── Validação de entrada ────────────────────────────────────────────────
     if (!descricao || !usuario_criador_id) {
-        return res.status(400).json({ message: "A descrição e o ID do usuário criador são obrigatórios." });
+        return res.status(400).json({
+            message: 'A descrição e o ID do usuário criador são obrigatórios.',
+        });
     }
-    if (!itens_cotacao || !Array.isArray(itens_cotacao) || itens_cotacao.length === 0) {
-        return res.status(400).json({ message: "É necessário enviar pelo menos um item para a cotação." });
+    if (!Array.isArray(itens_cotacao) || itens_cotacao.length === 0) {
+        return res.status(400).json({
+            message: 'É necessário enviar pelo menos um item para a cotação.',
+        });
     }
 
     const client = await pool.connect();
@@ -24,56 +42,93 @@ exports.create = async (req, res) => {
     try {
         await client.query('BEGIN');
 
+        // ── INSERT MESTRE — tabela `cotacoes` ───────────────────────────────
         const cotacaoQuery = `
             INSERT INTO cotacoes (descricao, usuario_criador_id, status, data_criacao)
-            VALUES ($1, $2, 'Aberta', NOW())
+            VALUES ($1, $2, $3, NOW())
             RETURNING id;
         `;
-        const cotacaoValues = [descricao, usuario_criador_id];
+        const cotacaoValues = [
+            descricao,
+            usuario_criador_id,
+            status || 'Aberta',
+        ];
         const cotacaoResult = await client.query(cotacaoQuery, cotacaoValues);
         const novaCotacaoId = cotacaoResult.rows[0].id;
 
-        const itemPromises = itens_cotacao.map(item => {
+        console.log(`[create] Cotação mestre criada com ID: ${novaCotacaoId}`);
+
+        // ── INSERT DETALHE — tabela `dados_cotacoes` ────────────────────────
+        // Helper: trata apenas undefined/null → null, preserva 0 intencionalmente.
+        const safeVal = (v) => (v === undefined ? null : v);
+
+        const itemPromises = itens_cotacao.map((item, idx) => {
+            // Log útil para identificar qual item falhou em caso de erro
+            console.log(`[create] Inserindo item ${idx + 1}:`, item);
+
             const itemQuery = `
                 INSERT INTO dados_cotacoes (
-                    cotacao_id, produto_id, distribuidor_id, quantidade, valor_unitario,
-                    valor_cout, valor_osc, valor_venda_final, dolar_cotacao, data_retorno,
-                    data_registro, data_atualizacao
+                    cotacao_id,
+                    produto_id,
+                    distribuidor_id,
+                    quantidade,
+                    valor_unitario,
+                    valor_cout,
+                    valor_osc,
+                    valor_venda_final,
+                    dolar_cotacao,
+                    data_cotacao,
+                    data_retorno,
+                    data_registro,
+                    data_atualizacao
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW());
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW());
             `;
+
             const itemValues = [
-                novaCotacaoId,
-                item.produto_id,
-                item.distribuidor_id,
-                item.quantidade,
-                item.valor_unitario || null,
-                item.valor_cout || null,
-                item.valor_osc || null,
-                item.valor_venda_final || null,
-                item.dolar_cotacao || null,
-                item.data_retorno || null
+                novaCotacaoId,            // $1  cotacao_id (FK)
+                item.produto_id,          // $2  null→PG rejeitará (FK obrigatória)
+                item.distribuidor_id,     // $3  idem
+                safeVal(item.quantidade), // $4
+                safeVal(item.valor_unitario),    // $5
+                safeVal(item.valor_cout),        // $6
+                safeVal(item.valor_osc),         // $7
+                safeVal(item.valor_venda_final), // $8 → 0 no Modo Rápido
+                safeVal(item.dolar_cotacao),     // $9 → 0 no Modo Rápido
+                safeVal(item.data_cotacao),      // $10
+                safeVal(item.data_retorno),      // $11 → null no Modo Rápido
             ];
+
             return client.query(itemQuery, itemValues);
         });
 
+        // Executa todos os inserts de itens em paralelo dentro da mesma transação
         await Promise.all(itemPromises);
+
         await client.query('COMMIT');
 
-        res.status(201).json({
-            message: "Cotação e seus itens criados com sucesso!",
-            cotacao_id: novaCotacaoId
+        console.log(`[create] COMMIT OK — cotacao_id=${novaCotacaoId}`);
+
+        return res.status(201).json({
+            message: 'Cotação e seus itens criados com sucesso!',
+            cotacao_id: novaCotacaoId,
         });
 
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error("ERRO NA TRANSAÇÃO DO BACKEND:", error);
-        res.status(500).json({ message: "Erro interno no servidor ao criar a cotação." });
+        console.error('[create] ROLLBACK — erro na transação:', error.message);
+        console.error('[create] Detalhe:', error);
+
+        return res.status(500).json({
+            message: 'Erro interno no servidor ao criar a cotação.',
+            detail: error.message, // útil durante desenvolvimento; remover em produção
+        });
 
     } finally {
         client.release();
     }
 };
+
 
 /**
  * @description Lista todas as cotações mestras cadastradas.
