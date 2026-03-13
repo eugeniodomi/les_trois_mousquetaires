@@ -3,6 +3,7 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
 const { verifyToken, requireRole } = require('../middleware/auth.middleware');
+const userController = require('../controllers/user.controller');
 
 // ROTA PARA BUSCAR O LAYOUT DO DASHBOARD
 // GET /api/usuarios/layout
@@ -69,39 +70,56 @@ router.put('/layout', async (req, res) => {
 // ROTAS ADMIN — RBAC protegidas por verifyToken + requireRole
 // =============================================================
 
-// GET /api/usuarios — Lista todos os usuários (apenas admin)
-router.get('/', verifyToken, requireRole(['admin']), async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT id, nome, email, cargo, foto_url, role FROM usuarios ORDER BY nome ASC'
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Erro ao listar usuários:', err.message);
-    res.status(500).json({ error: 'Erro no servidor' });
-  }
-});
+// GET /api/usuarios — Lista todos os usuários (apenas admin e root)
+router.get('/', verifyToken, requireRole(['root', 'admin']), userController.listUsers);
 
-// PUT /api/usuarios/:id/role — Atualiza o role de um usuário (apenas admin)
-router.put('/:id/role', verifyToken, requireRole(['admin']), async (req, res) => {
+// PUT /api/usuarios/:id/role — Atualiza o role de um usuário (hierárquico)
+router.put('/:id/role', verifyToken, requireRole(['root', 'admin']), async (req, res) => {
   const { id } = req.params;
-  const { role } = req.body;
+  const { role: newRole } = req.body;
+  const requesterRole = req.user.role;
 
-  const allowedRoles = ['admin', 'priority', 'user'];
-  if (!role || !allowedRoles.includes(role)) {
+  const allowedRoles = ['root', 'admin', 'priority', 'user'];
+  
+  if (!newRole || !allowedRoles.includes(newRole)) {
     return res.status(400).json({
       msg: `Role inválido. Valores permitidos: ${allowedRoles.join(', ')}.`,
     });
   }
 
   try {
-    const result = await pool.query(
-      'UPDATE usuarios SET role = $1 WHERE id = $2 RETURNING id, nome, email, cargo, foto_url, role',
-      [role, id]
-    );
-    if (result.rowCount === 0) {
+    // 1. Fetch the target user's current role
+    const targetUserResult = await pool.query('SELECT role FROM usuarios WHERE id = $1', [id]);
+    
+    if (targetUserResult.rowCount === 0) {
       return res.status(404).json({ msg: 'Usuário não encontrado.' });
     }
+    
+    const targetUserRole = targetUserResult.rows[0].role;
+
+    // 2. Apply hierarchical restrictions if requester is NOT 'root'
+    if (requesterRole !== 'root') {
+      // Admin CANNOT change the role of a root user
+      if (targetUserRole === 'root') {
+        return res.status(403).json({ 
+          msg: 'Acesso negado. Apenas o Master Admin (root) pode alterar o perfil de outro root.' 
+        });
+      }
+
+      // Admin CANNOT promote anyone to root
+      if (newRole === 'root') {
+        return res.status(403).json({ 
+          msg: 'Acesso negado. Apenas o Master Admin (root) pode promover usuários ao nível root.' 
+        });
+      }
+    }
+
+    // 3. Perform the update
+    const result = await pool.query(
+      'UPDATE usuarios SET role = $1 WHERE id = $2 RETURNING id, nome, email, cargo, foto_url, role',
+      [newRole, id]
+    );
+
     res.json({ msg: 'Role atualizado com sucesso!', user: result.rows[0] });
   } catch (err) {
     console.error('Erro ao atualizar role:', err.message);

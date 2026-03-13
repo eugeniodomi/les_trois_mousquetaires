@@ -1,15 +1,20 @@
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext.jsx'; // Ensure this path is also correct (.jsx)
+import { useAuth } from '../contexts/AuthContext.jsx';
 
-export default function ProtectedRoute() {
-  const auth = useAuth();
+export default function ProtectedRoute({ adminOnly = false }) {
+  const { user } = useAuth();
 
-  if (!auth.user) {
+  if (!user) {
     // Se não há usuário logado, redireciona para a página de login
     return <Navigate to="/login" />;
   }
 
-  // Se o usuário está logado, renderiza a página que ele tentou acessar
+  // 🔐 RBAC: Se a rota for exclusiva para admin/root e o usuário não for, redireciona para a Home
+  if (adminOnly && !['root', 'admin'].includes(user.role)) {
+    return <Navigate to="/" />;
+  }
+
+  // Se o usuário está logado (e tem permissão), renderiza a página
   return <Outlet />;
 }

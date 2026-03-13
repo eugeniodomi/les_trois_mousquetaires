@@ -7,28 +7,40 @@ const API_BASE_URL = 'http://localhost:5000/api';
 // 1. Criar o Contexto
 const AuthContext = createContext(null);
 
-// 2. Criar o Provedor do Contexto
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true); // ⏳ Adicionado estado de loading para saturação
   const navigate = useNavigate();
 
-  // Efeito para verificar se já existe um usuário no localStorage ao carregar
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      // Auto-patch: Se o usuário logado de uma sessão antiga não tiver ID, injeta id: 1 nativamente
-      if (!parsedUser.id) {
-        parsedUser.id = 1;
-        localStorage.setItem('user', JSON.stringify(parsedUser));
+    const initAuth = () => {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          
+          // Auto-patch ID
+          if (!parsedUser.id) {
+            parsedUser.id = 1;
+            localStorage.setItem('user', JSON.stringify(parsedUser));
+          }
+          
+          setUser(parsedUser);
+          console.log("[AUTH] Token restaurado:", parsedUser.token ? "Presente" : "AUSENTE");
+        } catch (e) {
+          console.error("[AUTH] Erro ao parsear usuário do localStorage", e);
+          localStorage.removeItem('user');
+        }
       }
-      setUser(parsedUser);
-    }
+      setLoading(false); // Saturação concluída
+    };
+
+    initAuth();
   }, []);
 
-  // Função de Login
   const login = async (email, password) => {
     console.log("Tentando login com:", email, password);
+    setLoading(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, { email, password });
       const userData = response.data.user;
@@ -62,8 +74,11 @@ export function AuthProvider({ children }) {
       localStorage.setItem('user', JSON.stringify(mockUser));
       setUser(mockUser);
       navigate('/');
+    } finally {
+      setLoading(false);
     }
   };
+
 
   // Função de Logout
   const logout = () => {
@@ -96,9 +111,13 @@ export function AuthProvider({ children }) {
 
   // Adiciona a função 'register' ao valor do contexto
   // user.role estará disponível em todo o app via useAuth()
-  const value = { user, login, logout, register, setRole };
+  const value = { user, login, logout, register, setRole, loading };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 }
 
 // 3. Criar um Hook customizado para facilitar o uso do contexto

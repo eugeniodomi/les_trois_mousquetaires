@@ -225,8 +225,8 @@ export default function Layout() {
             </List>
           </Collapse>
 
-          {/* 🔐 SEÇÃO ADMIN — visível APENAS para usuários com role 'admin' */}
-          {user?.role === 'admin' && (
+          {/* 🔐 SEÇÃO ADMIN — visível para usuários com role 'admin' ou 'root' */}
+          {['root', 'admin'].includes(user?.role) && (
             <>
               <ListItemButton onClick={() => setAdminOpen(!adminOpen)}
                 sx={{ mt: 1, borderTop: 1, borderColor: 'divider' }}

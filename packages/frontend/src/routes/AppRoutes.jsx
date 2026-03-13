@@ -23,6 +23,7 @@ import CadastroDistribuidoresPage from '../pages/CadastroDistribuidoresPage';
 import DistribuidorDetailPage from '../pages/DistribuidorDetailPage';
 import EditarDistribuidorPage from '../pages/EditarDistribuidorPage';
 import DistributorAnalytics from '../pages/DistributorAnalytics';
+import GerenciarUsuariosPage from '../pages/GerenciarUsuariosPage';
 
 
 import ProdutosDetailPage from '../pages/ProdutosDetailPage';
@@ -72,6 +73,11 @@ export default function AppRoutes() {
             <Route path="novo" element={<CadastroProdutosPage />} />
             <Route path=":id" element={<ProdutosDetailPage />} />
             <Route path=":id/editar" element={<EditarProdutoPage />} />
+          </Route>
+
+          {/* --- ROTA DE ADMINISTRAÇÃO (RBAC) --- */}
+          <Route element={<ProtectedRoute adminOnly />}>
+            <Route path="gerenciar-usuarios" element={<GerenciarUsuariosPage />} />
           </Route>
 
           <Route path="dashboards" element={<DashboardsPage />} />

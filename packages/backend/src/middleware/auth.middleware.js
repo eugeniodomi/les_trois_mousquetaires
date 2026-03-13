@@ -9,7 +9,7 @@ const jwt = require('jsonwebtoken');
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!authHeader || !authHeader.toLowerCase().startsWith('bearer ')) {
     return res.status(401).json({ msg: 'Acesso negado. Nenhum token fornecido.' });
   }
 
@@ -18,7 +18,14 @@ const verifyToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     // Suporta ambos os formatos de payload: nested { user: { role } } ou flat { role }
-    req.user = decoded.user || decoded; 
+    // Attach the entire decoded object or the nested user object
+    req.user = decoded.user ? { ...decoded.user } : { ...decoded };
+    
+    // Ensure role is explicitly accessible at the top level of req.user
+    if (!req.user.role && decoded.role) {
+      req.user.role = decoded.role;
+    }
+
     next();
   } catch (err) {
     return res.status(401).json({ msg: 'Token inválido ou expirado.' });
