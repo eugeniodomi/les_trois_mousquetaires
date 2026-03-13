@@ -66,38 +66,26 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ msg: 'Credenciais inválidas.' });
     }
 
-    // 4. Se a senha está correta, cria o payload do Token
-    const payload = {
+    // 4. Se a senha está correta, cria o payload e assina o Token
+    console.log(`[AUTH] Emitindo token para: ${user.email}, Role: ${user.role}`);
+    
+    const token = jwt.sign(
+      { id: user.id, email: user.email, role: user.role }, // ADDED ROLE HERE
+      process.env.JWT_SECRET,
+      { expiresIn: '1d' }
+    );
+
+    res.json({
+      token,
       user: {
         id: user.id,
-        name: user.nome,
+        nome: user.nome,
         email: user.email,
         cargo: user.cargo,
-        foto_url: user.foto_url,
-        role: user.role      // 🔐 RBAC: role incluído no JWT
-      },
-    };
-
-    // 5. Assina o Token com a chave secreta e define um tempo de expiração
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '1h' }, // Token expira em 1 hora
-      (err, token) => {
-        if (err) throw err;
-        res.json({ 
-          token, 
-          user: { 
-            id: user.id, 
-            nome: user.nome, 
-            email: user.email, 
-            cargo: user.cargo, 
-            foto_url: user.foto_url,
-            role: user.role   // 🔐 RBAC: role enviado ao frontend
-          } 
-        }); // Envia o token e os dados do usuário para o frontend
+        role: user.role, // ADDED ROLE HERE
+        foto_url: user.foto_url
       }
-    );
+    });
 
   } catch (err) {
     console.error(err.message);

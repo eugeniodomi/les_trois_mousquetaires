@@ -1,0 +1,57 @@
+═══════════════════════════════════════════════
+  RBAC Test Suite — Les Trois Mousquetaires    
+═══════════════════════════════════════════════
+
+▶  Step A: POST /api/auth/login
+   Email: adm@itone.com.br
+   ✅ Login successful (HTTP 200)
+
+▶  Step B: Verify role in login response
+   ✅ Role received: "admin"
+   Full user object: {
+  "id": 5,
+  "nome": "Admin IT-ONE",
+  "email": "adm@itone.com.br",
+  "cargo": "Colaborador",
+  "role": "admin",
+  "foto_url": null
+}
+   JWT payload role: "NOT FOUND"
+
+▶  Step C: GET /api/usuarios  (admin-only route)
+
+▶  Step D: Result
+   HTTP Status: 200 OK
+   ✅ PASS — Admin access granted. 5 user(s) returned.
+   Users: [
+  {
+    "id": 5,
+    "nome": "Admin IT-ONE",
+    "role": "admin"
+  },
+  {
+    "id": 3,
+    "nome": "Carlos",
+    "role": "user"
+  },
+  {
+    "id": 1,
+    "nome": "Eugênio Teste",
+    "role": "admin"
+  },
+  {
+    "id": 2,
+    "nome": "Eugênio Testea",
+    "role": "user"
+  },
+  {
+    "id": 4,
+    "nome": "teste",
+    "role": "user"
+  }
+]
+
+═══════════════════════════════════════════════
+  Test complete.
+═══════════════════════════════════════════════
+
