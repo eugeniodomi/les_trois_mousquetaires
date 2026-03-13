@@ -42,14 +42,15 @@ export function AuthProvider({ children }) {
       navigate('/');
     } catch (err) {
       console.error("Erro no login:", err);
-      // Fallback para desenvolvimento
+      // Fallback para desenvolvimento (role: 'admin' para testar o painel de administração)
       const mockUser = { 
         id: 1, 
         name: 'Administrador', 
         email: email, 
         token: 'aladin', 
         cargo: 'Gerente', 
-        foto_url: null 
+        foto_url: null,
+        role: 'admin'   // 🔐 RBAC: role padrão do modo dev
       };
       localStorage.setItem('user', JSON.stringify(mockUser));
       setUser(mockUser);
@@ -59,11 +60,16 @@ export function AuthProvider({ children }) {
 
   // Função de Logout
   const logout = () => {
-    // Remove o usuário do localStorage e do estado
     localStorage.removeItem('user');
     setUser(null);
-    // Redireciona para a página de login
     navigate('/login');
+  };
+
+  // Função para atualizar o role localmente (ex: após o admin mudar seu próprio role)
+  const setRole = (newRole) => {
+    const updatedUser = { ...user, role: newRole };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
   };
 
  const register = async (name, email, password) => {
@@ -82,7 +88,8 @@ export function AuthProvider({ children }) {
   };
 
   // Adiciona a função 'register' ao valor do contexto
-  const value = { user, login, logout, register };
+  // user.role estará disponível em todo o app via useAuth()
+  const value = { user, login, logout, register, setRole };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

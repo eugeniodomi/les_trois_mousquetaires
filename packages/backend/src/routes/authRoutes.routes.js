@@ -54,7 +54,7 @@ router.post('/login', async (req, res) => {
 
   try {
     // 2. Procura o usuário pelo email
-    const userResult = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+    const userResult = await pool.query('SELECT id, nome, email, senha_hash, cargo, foto_url, role FROM usuarios WHERE email = $1', [email]);
     if (userResult.rows.length === 0) {
       return res.status(400).json({ msg: 'Credenciais inválidas.' });
     }
@@ -73,7 +73,8 @@ router.post('/login', async (req, res) => {
         name: user.nome,
         email: user.email,
         cargo: user.cargo,
-        foto_url: user.foto_url
+        foto_url: user.foto_url,
+        role: user.role      // 🔐 RBAC: role incluído no JWT
       },
     };
 
@@ -91,7 +92,8 @@ router.post('/login', async (req, res) => {
             nome: user.nome, 
             email: user.email, 
             cargo: user.cargo, 
-            foto_url: user.foto_url 
+            foto_url: user.foto_url,
+            role: user.role   // 🔐 RBAC: role enviado ao frontend
           } 
         }); // Envia o token e os dados do usuário para o frontend
       }

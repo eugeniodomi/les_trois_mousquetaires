@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const pool = require('../config/database');
+const { verifyToken, requireRole } = require('../middleware/auth.middleware');
 
 // ROTA PARA BUSCAR O LAYOUT DO DASHBOARD
 // GET /api/usuarios/layout
@@ -61,6 +62,50 @@ router.put('/layout', async (req, res) => {
   } catch (err) {
     console.error('Error saving layout:', err.message);
     res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+// =============================================================
+// ROTAS ADMIN — RBAC protegidas por verifyToken + requireRole
+// =============================================================
+
+// GET /api/usuarios — Lista todos os usuários (apenas admin)
+router.get('/', verifyToken, requireRole(['admin']), async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, nome, email, cargo, foto_url, role FROM usuarios ORDER BY nome ASC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao listar usuários:', err.message);
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
+
+// PUT /api/usuarios/:id/role — Atualiza o role de um usuário (apenas admin)
+router.put('/:id/role', verifyToken, requireRole(['admin']), async (req, res) => {
+  const { id } = req.params;
+  const { role } = req.body;
+
+  const allowedRoles = ['admin', 'priority', 'user'];
+  if (!role || !allowedRoles.includes(role)) {
+    return res.status(400).json({
+      msg: `Role inválido. Valores permitidos: ${allowedRoles.join(', ')}.`,
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      'UPDATE usuarios SET role = $1 WHERE id = $2 RETURNING id, nome, email, cargo, foto_url, role',
+      [role, id]
+    );
+    if (result.rowCount === 0) {
+      return res.status(404).json({ msg: 'Usuário não encontrado.' });
+    }
+    res.json({ msg: 'Role atualizado com sucesso!', user: result.rows[0] });
+  } catch (err) {
+    console.error('Erro ao atualizar role:', err.message);
+    res.status(500).json({ error: 'Erro no servidor' });
   }
 });
 

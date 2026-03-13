@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import UserMenu from './UserMenu';
+import { useAuth } from '../../contexts/AuthContext';
 import { styled, useTheme } from '@mui/material/styles';
 import { Box, Drawer as MuiDrawer, AppBar as MuiAppBar, Toolbar, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography, IconButton, CssBaseline, Collapse } from '@mui/material';
 import { ColorModeContext } from '../../config/theme';
@@ -20,6 +21,8 @@ import RequestQuoteIcon from '@mui/icons-material/RequestQuote';
 import PostAddIcon from '@mui/icons-material/PostAdd';
 import Brightness4Icon from '@mui/icons-material/Brightness4';
 import Brightness7Icon from '@mui/icons-material/Brightness7';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import ManageAccountsIcon from '@mui/icons-material/ManageAccounts';
 
 const drawerWidth = 240;
 
@@ -72,11 +75,13 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 export default function Layout() {
   const theme = useTheme();
   const colorMode = React.useContext(ColorModeContext);
+  const { user } = useAuth(); // 🔐 RBAC: obtém o usuário logado e seu role
 
   const [open, setOpen] = useState(true);
   const [cadastrosOpen, setCadastrosOpen] = useState(false);
   const [produtosOpen, setProdutosOpen] = useState(false);
   const [distribuidoresOpen, setDistribuidoresOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false); // estado do submenu de admin
 
   const handleDrawerToggle = () => {
     setOpen(!open);
@@ -219,6 +224,32 @@ export default function Layout() {
               </ListItemButton>
             </List>
           </Collapse>
+
+          {/* 🔐 SEÇÃO ADMIN — visível APENAS para usuários com role 'admin' */}
+          {user?.role === 'admin' && (
+            <>
+              <ListItemButton onClick={() => setAdminOpen(!adminOpen)}
+                sx={{ mt: 1, borderTop: 1, borderColor: 'divider' }}
+              >
+                <ListItemIcon>
+                  <AdminPanelSettingsIcon color="warning" />
+                </ListItemIcon>
+                <ListItemText
+                  primary="Administração"
+                  primaryTypographyProps={{ fontWeight: 'bold', color: 'warning.main' }}
+                />
+                {adminOpen ? <ExpandLess /> : <ExpandMore />}
+              </ListItemButton>
+              <Collapse in={adminOpen} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding>
+                  <ListItemButton component={Link} to="/gerenciar-usuarios" sx={{ pl: 4 }}>
+                    <ListItemIcon><ManageAccountsIcon fontSize="small" /></ListItemIcon>
+                    <ListItemText primary="Gerenciar Usuários" />
+                  </ListItemButton>
+                </List>
+              </Collapse>
+            </>
+          )}
         </List>
       </Drawer>
 

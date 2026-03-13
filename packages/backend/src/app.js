@@ -58,8 +58,9 @@ app.use('/api/global-dashboard', globalDashboardRoutes);
 // Rota de autenticação com o limitador de requisições
 app.use('/api/auth', authLimiter, authRoutes);
 
-// Rotas de usuários
+// Rotas de usuários (mantém /api/users para compatibilidade + /api/usuarios para RBAC admin)
 app.use('/api/users', userRoutes);
+app.use('/api/usuarios', userRoutes);
 
 // A URL da API continua a mesma, pois representa o recurso "cotacoes",
 app.use('/api/cotacoes', admCotacoesRoutes);
