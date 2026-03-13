@@ -67,7 +67,7 @@ function ItemCard({ item, index, total, isCotacaoRapida, produtos, distribuidore
         borderRadius: 3,
         border: '1px solid',
         borderColor: 'divider',
-        overflow: 'hidden',
+        // overflow: 'hidden' removido — causava clipping no Autocomplete input
         transition: 'box-shadow 0.2s ease',
         '&:hover': { boxShadow: 3 },
       }}
@@ -92,9 +92,14 @@ function ItemCard({ item, index, total, isCotacaoRapida, produtos, distribuidore
             size="small"
             color="primary"
             variant="outlined"
-            sx={{ fontWeight: 700, minWidth: 40 }}
+            sx={{ fontWeight: 700, minWidth: 40, flexShrink: 0 }}
           />
-          <Typography variant="body2" color="text.secondary" noWrap sx={{ maxWidth: 480 }}>
+          {/* noWrap ausente + wordBreak: nomes longos nunca serão truncados */}
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ whiteSpace: 'normal', wordBreak: 'break-word' }}
+          >
             {resumo}
           </Typography>
         </Box>
@@ -117,34 +122,67 @@ function ItemCard({ item, index, total, isCotacaoRapida, produtos, distribuidore
       </Box>
 
       <Collapse in={expanded}>
-        <CardContent sx={{ px: 3, pt: 2.5, pb: 3 }}>
-          {/* Row 1: Produto + Distribuidor */}
-          <Grid container spacing={3} sx={{ mb: 2 }}>
-            <Grid item xs={12} md={6}>
-              <Autocomplete
-                options={produtos}
-                getOptionLabel={o => `${o.nome} (SKU: ${o.sku || 'N/A'})`}
-                value={produtoSelecionado}
-                onChange={(_, v) => onAutocompleteChange(index, 'produto_id', v)}
-                isOptionEqualToValue={(o, v) => o.id === v.id}
-                renderInput={params => (
-                  <TextField {...params} variant="standard" label="Produto *" fullWidth />
-                )}
-              />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Autocomplete
-                options={distribuidores}
-                getOptionLabel={o => o.nome}
-                value={distribuidorSelecionado}
-                onChange={(_, v) => onAutocompleteChange(index, 'distribuidor_id', v)}
-                isOptionEqualToValue={(o, v) => o.id === v.id}
-                renderInput={params => (
-                  <TextField {...params} variant="standard" label="Distribuidor *" fullWidth />
-                )}
-              />
-            </Grid>
-          </Grid>
+        <CardContent sx={{ px: 4, pt: 3, pb: 4 }}>
+          {/* Produto e Distribuidor — Box simples evita problema de margem negativa
+              do MUI Grid dentro de Collapse + CardContent com px grande */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mb: 3, width: '100%' }}>
+            <Autocomplete
+              options={produtos}
+              getOptionLabel={o => `${o.nome} (SKU: ${o.sku || 'N/A'})`}
+              value={produtoSelecionado}
+              onChange={(_, v) => onAutocompleteChange(index, 'produto_id', v)}
+              isOptionEqualToValue={(o, v) => o.id === v.id}
+              fullWidth
+              slotProps={{
+                paper: { sx: { width: 'max-content', minWidth: '100%', maxWidth: '90vw' } },
+              }}
+              renderOption={(props, option) => (
+                <li {...props} key={option.id}>
+                  <Typography sx={{ whiteSpace: 'normal', wordBreak: 'break-word', fontSize: '0.95rem' }}>
+                    {`${option.nome} (SKU: ${option.sku || 'N/A'})`}
+                  </Typography>
+                </li>
+              )}
+              renderInput={params => (
+                <TextField
+                  {...params}
+                  variant="standard"
+                  label="Produto *"
+                  fullWidth
+                  inputProps={{
+                    ...params.inputProps,
+                    style: { fontSize: '1rem', fontWeight: 600 },
+                  }}
+                />
+              )}
+            />
+            <Autocomplete
+              options={distribuidores}
+              getOptionLabel={o => o.nome}
+              value={distribuidorSelecionado}
+              onChange={(_, v) => onAutocompleteChange(index, 'distribuidor_id', v)}
+              isOptionEqualToValue={(o, v) => o.id === v.id}
+              fullWidth
+              slotProps={{
+                paper: { sx: { width: 'max-content', minWidth: '100%', maxWidth: '90vw' } },
+              }}
+              renderOption={(props, option) => (
+                <li {...props} key={option.id}>
+                  <Typography sx={{ whiteSpace: 'normal', wordBreak: 'break-word', fontSize: '0.95rem' }}>
+                    {option.nome}
+                  </Typography>
+                </li>
+              )}
+              renderInput={params => (
+                <TextField
+                  {...params}
+                  variant="standard"
+                  label="Distribuidor *"
+                  fullWidth
+                />
+              )}
+            />
+          </Box>
 
           {/* Separator label */}
           <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mb: 1.5, textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -265,19 +303,39 @@ function ReviewSummary({ cotacao, itens, produtos, distribuidores }) {
           <Paper
             key={item.uniqueId}
             variant="outlined"
-            sx={{ p: 2.5, borderRadius: 3, mb: 2, borderLeft: '3px solid', borderColor: 'primary.main' }}
+            sx={{ p: 3.5, borderRadius: 3, mb: 2, borderLeft: '4px solid', borderColor: 'primary.main' }}
           >
-            <Grid container spacing={1.5}>
-              <Grid item xs={12} sm={6}><Typography variant="caption" color="text.secondary">Produto</Typography><Typography fontWeight={500}>{getProdutoNome(item.produto_id)}</Typography></Grid>
-              <Grid item xs={12} sm={6}><Typography variant="caption" color="text.secondary">Distribuidor</Typography><Typography fontWeight={500}>{getDistribuidorNome(item.distribuidor_id)}</Typography></Grid>
-              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary">Qtd.</Typography><Typography>{item.quantidade}</Typography></Grid>
-              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary">Vlr. Unitário</Typography><Typography>{item.valor_unitario || '—'}</Typography></Grid>
-              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary">Vlr. QUOTE</Typography><Typography>{item.valor_cout || '—'}</Typography></Grid>
-              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary">Vlr. OSC</Typography><Typography>{item.valor_osc || '—'}</Typography></Grid>
-              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary">Venda Final</Typography><Typography>{item.valor_venda_final || '—'}</Typography></Grid>
-              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary">Dólar Cotação</Typography><Typography>{item.dolar_cotacao || '—'}</Typography></Grid>
-              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary">Data Cotação</Typography><Typography>{item.data_cotacao || '—'}</Typography></Grid>
-              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary">Data Retorno</Typography><Typography>{item.data_retorno || '—'}</Typography></Grid>
+            <Grid container spacing={3}>
+
+              {/* Produto — texto grande, bold, sem truncamento */}
+              <Grid item xs={12} sm={6}>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Produto
+                </Typography>
+                <Typography variant="subtitle1" fontWeight={700} sx={{ lineHeight: 1.3 }}>
+                  {getProdutoNome(item.produto_id)}
+                </Typography>
+              </Grid>
+
+              {/* Distribuidor — texto médio, semi-bold */}
+              <Grid item xs={12} sm={6}>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Distribuidor
+                </Typography>
+                <Typography variant="subtitle1" fontWeight={500}>
+                  {getDistribuidorNome(item.distribuidor_id)}
+                </Typography>
+              </Grid>
+
+              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary" display="block">Qtd.</Typography><Typography>{item.quantidade}</Typography></Grid>
+              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary" display="block">Vlr. Unitário</Typography><Typography>{item.valor_unitario || '—'}</Typography></Grid>
+              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary" display="block">Vlr. QUOTE</Typography><Typography>{item.valor_cout || '—'}</Typography></Grid>
+              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary" display="block">Vlr. OSC</Typography><Typography>{item.valor_osc || '—'}</Typography></Grid>
+              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary" display="block">Venda Final</Typography><Typography color={!item.valor_venda_final || item.valor_venda_final === 0 ? 'text.disabled' : 'inherit'}>{item.valor_venda_final || 'N/D'}</Typography></Grid>
+              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary" display="block">Dólar Cotação</Typography><Typography color={!item.dolar_cotacao || item.dolar_cotacao === 0 ? 'text.disabled' : 'inherit'}>{item.dolar_cotacao || 'N/D'}</Typography></Grid>
+              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary" display="block">Data Cotação</Typography><Typography>{item.data_cotacao || '—'}</Typography></Grid>
+              <Grid item xs={6} sm={3}><Typography variant="caption" color="text.secondary" display="block">Data Retorno</Typography><Typography color={!item.data_retorno ? 'text.disabled' : 'inherit'}>{item.data_retorno || 'Pendente'}</Typography></Grid>
+
             </Grid>
           </Paper>
         ))}
@@ -657,7 +715,10 @@ function CadastroCotacaoPage() {
             {/* ── Navigation Buttons ── */}
             <Divider sx={{ my: 4 }} />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+              {/* Voltar / Cancelar — type="button" garante que nunca dispara o form submit */}
               <Button
+                type="button"
                 variant="text"
                 color="inherit"
                 startIcon={<ArrowBackIcon />}
@@ -668,7 +729,9 @@ function CadastroCotacaoPage() {
               </Button>
 
               {activeStep < STEPS.length - 1 ? (
+                /* Próximo — type="button" impede qualquer submissão acidental */
                 <Button
+                  type="button"
                   variant="contained"
                   endIcon={<ArrowForwardIcon />}
                   onClick={() => setActiveStep(s => s + 1)}
@@ -681,16 +744,18 @@ function CadastroCotacaoPage() {
                   Próximo
                 </Button>
               ) : (
+                /* Etapa 3 — ÚNICO botão atrelado ao handleSubmit via type="submit" */
                 <Button
                   type="submit"
                   variant="contained"
                   color="success"
-                  disableElevation
                   size="large"
+                  disableElevation
                   startIcon={formLoading ? <CircularProgress size={18} color="inherit" /> : <SaveOutlinedIcon />}
                   disabled={formLoading}
+                  sx={{ px: 4, fontWeight: 700, letterSpacing: 0.5 }}
                 >
-                  {formLoading ? 'Salvando...' : 'Salvar Cotação'}
+                  {formLoading ? 'Enviando...' : 'Confirmar e Enviar Cotação'}
                 </Button>
               )}
             </Box>
