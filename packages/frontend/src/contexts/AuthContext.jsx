@@ -34,6 +34,13 @@ export function AuthProvider({ children }) {
       const userData = response.data.user;
       userData.token = response.data.token;
       
+      // 🔐 RBAC: Garantir que o role seja extraído e salvo
+      if (response.data.role) {
+        userData.role = response.data.role;
+      } else if (response.data.user && response.data.user.role) {
+        userData.role = response.data.user.role;
+      }
+      
       // Guarda o usuário no localStorage e no estado
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
